@@ -1,75 +1,90 @@
-'use client'
+"use client";
 
-import { createClient } from '@/lib/supabase/client'
-import { useState, useEffect } from 'react'
-import { useRouter } from 'next/navigation'
+import { createClient } from "@/lib/supabase/client";
+import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 
-export default function GradeEntryForm({ courses, teacherId }: { courses: any[], teacherId: string }) {
-  const [selectedCourse, setSelectedCourse] = useState('')
-  const [students, setStudents] = useState<any[]>([])
-  const [selectedStudent, setSelectedStudent] = useState('')
-  const [assignmentName, setAssignmentName] = useState('')
-  const [score, setScore] = useState('')
-  const [loading, setLoading] = useState(false)
-  const [message, setMessage] = useState('')
-  const router = useRouter()
-  const supabase = createClient()
+export default function GradeEntryForm({
+  courses,
+  teacherId,
+}: {
+  courses: any[];
+  teacherId?: string;
+}) {
+  const [selectedCourse, setSelectedCourse] = useState("");
+  const [students, setStudents] = useState<any[]>([]);
+  const [selectedStudent, setSelectedStudent] = useState("");
+  const [assignmentName, setAssignmentName] = useState("");
+  const [score, setScore] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [message, setMessage] = useState("");
+  const router = useRouter();
+  const supabase = createClient();
 
   useEffect(() => {
     if (selectedCourse) {
-      fetchStudents()
+      fetchStudents();
     }
-  }, [selectedCourse])
+  }, [selectedCourse]);
 
   const fetchStudents = async () => {
     const { data } = await supabase
-      .from('enrollments')
-      .select('*, profiles(id, full_name)')
-      .eq('course_id', selectedCourse)
+      .from("enrollments")
+      .select("*, profiles(id, full_name)")
+      .eq("course_id", selectedCourse);
 
-    setStudents(data || [])
-  }
+    setStudents(data || []);
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setLoading(true)
-    setMessage('')
+    e.preventDefault();
+    setLoading(true);
+    setMessage("");
 
-    const { error } = await supabase
-      .from('grades')
-      .insert({
-        student_id: selectedStudent,
-        course_id: selectedCourse,
-        teacher_id: teacherId,
-        assignment_name: assignmentName,
-        score: parseFloat(score),
-      })
+    if (!teacherId) {
+      setMessage("Teacher ID is required");
+      setLoading(false);
+      return;
+    }
+
+    const { error } = await supabase.from("grades").insert({
+      student_id: selectedStudent,
+      course_id: selectedCourse,
+      teacher_id: teacherId,
+      assignment_name: assignmentName,
+      score: parseFloat(score),
+    });
 
     if (error) {
-      setMessage('Error adding grade')
+      setMessage("Error adding grade");
     } else {
-      setMessage('Grade added successfully!')
-      setAssignmentName('')
-      setScore('')
-      router.refresh()
+      setMessage("Grade added successfully!");
+      setAssignmentName("");
+      setScore("");
+      router.refresh();
     }
-    setLoading(false)
-  }
+    setLoading(false);
+  };
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
       {message && (
-        <div className={`p-3 rounded-lg text-sm ${
-          message.includes('Error') 
-            ? 'bg-red-50 text-red-700' 
-            : 'bg-green-50 text-green-700'
-        }`}>
+        <div
+          className={`p-3 rounded-lg text-sm ${
+            message.includes("Error")
+              ? "bg-red-50 text-red-700"
+              : "bg-green-50 text-green-700"
+          }`}
+        >
           {message}
         </div>
       )}
 
       <div>
-        <label htmlFor="course" className="block text-sm font-medium text-gray-700 mb-1">
+        <label
+          htmlFor="course"
+          className="block text-sm font-medium text-gray-700 mb-1"
+        >
           Course
         </label>
         <select
@@ -91,7 +106,10 @@ export default function GradeEntryForm({ courses, teacherId }: { courses: any[],
       {selectedCourse && (
         <>
           <div>
-            <label htmlFor="student" className="block text-sm font-medium text-gray-700 mb-1">
+            <label
+              htmlFor="student"
+              className="block text-sm font-medium text-gray-700 mb-1"
+            >
               Student
             </label>
             <select
@@ -111,7 +129,10 @@ export default function GradeEntryForm({ courses, teacherId }: { courses: any[],
           </div>
 
           <div>
-            <label htmlFor="assignment" className="block text-sm font-medium text-gray-700 mb-1">
+            <label
+              htmlFor="assignment"
+              className="block text-sm font-medium text-gray-700 mb-1"
+            >
               Assignment Name
             </label>
             <input
@@ -125,7 +146,10 @@ export default function GradeEntryForm({ courses, teacherId }: { courses: any[],
           </div>
 
           <div>
-            <label htmlFor="score" className="block text-sm font-medium text-gray-700 mb-1">
+            <label
+              htmlFor="score"
+              className="block text-sm font-medium text-gray-700 mb-1"
+            >
               Score (0-100)
             </label>
             <input
@@ -146,10 +170,10 @@ export default function GradeEntryForm({ courses, teacherId }: { courses: any[],
             disabled={loading}
             className="w-full bg-blue-600 text-white py-2 rounded-lg hover:bg-blue-700 transition disabled:opacity-50"
           >
-            {loading ? 'Adding grade...' : 'Add Grade'}
+            {loading ? "Adding grade..." : "Add Grade"}
           </button>
         </>
       )}
     </form>
-  )
+  );
 }
