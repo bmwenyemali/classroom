@@ -1,14 +1,16 @@
-import { createClient } from '@/lib/supabase/server'
+import { createClient } from "@/lib/supabase/server";
 
 export default async function CoursesPage() {
-  const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
 
   const { data: courses } = await supabase
-    .from('courses')
-    .select('*, enrollments(count)')
-    .eq('teacher_id', user?.id)
-    .order('created_at', { ascending: false })
+    .from("courses")
+    .select("*, enrollments(count)")
+    .eq("teacher_id", user?.id)
+    .order("created_at", { ascending: false });
 
   return (
     <div>
@@ -17,7 +19,10 @@ export default async function CoursesPage() {
       {courses && courses.length > 0 ? (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {courses.map((course) => (
-            <div key={course.id} className="bg-white rounded-lg shadow p-6 hover:shadow-lg transition">
+            <div
+              key={course.id}
+              className="bg-white rounded-lg shadow p-6 hover:shadow-lg transition"
+            >
               <div className="flex items-start justify-between mb-3">
                 <h3 className="text-xl font-bold text-gray-900">
                   {course.name}
@@ -27,7 +32,7 @@ export default async function CoursesPage() {
                 </span>
               </div>
               <p className="text-sm text-gray-600 mb-4">
-                {course.description || 'No description'}
+                {course.description || "No description"}
               </p>
               <div className="flex items-center justify-between pt-4 border-t">
                 <span className="text-sm text-gray-500">
@@ -46,5 +51,5 @@ export default async function CoursesPage() {
         </div>
       )}
     </div>
-  )
+  );
 }

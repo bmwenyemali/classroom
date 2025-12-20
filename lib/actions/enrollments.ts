@@ -16,7 +16,7 @@ export async function getEnrollments(courseId?: string) {
     .select(
       `
       *,
-      course:courses(id, code, name, semester),
+      course:courses(id, code, name, credits),
       student:profiles!enrollments_student_id_fkey(id, full_name, email)
     `
     )
@@ -44,7 +44,6 @@ export async function getStudentEnrollments(studentId: string) {
         id, 
         code, 
         name, 
-        semester, 
         credits,
         teacher:profiles!courses_teacher_id_fkey(id, full_name, email)
       )

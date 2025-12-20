@@ -74,7 +74,6 @@ export async function createCourse(formData: FormData) {
     name: formData.get("name") as string,
     description: formData.get("description") as string,
     teacher_id: user.id,
-    semester: formData.get("semester") as string,
     credits: parseInt((formData.get("credits") as string) || "3"),
   };
 
@@ -99,7 +98,6 @@ export async function updateCourse(id: string, formData: FormData) {
     code: formData.get("code") as string,
     name: formData.get("name") as string,
     description: formData.get("description") as string,
-    semester: formData.get("semester") as string,
     credits: parseInt((formData.get("credits") as string) || "3"),
   };
 
@@ -128,4 +126,41 @@ export async function deleteCourse(id: string) {
 
   revalidatePath("/dashboard/teacher/courses");
   revalidatePath("/dashboard/professor/all-classes");
+}
+
+export async function assignTeacherToCourse(
+  courseId: string,
+  teacherId: string
+) {
+  const supabase = await createClient();
+
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) throw new Error("Not authenticated");
+
+  // Verify user is a professor
+  const { data: profile } = await supabase
+    .from("profiles")
+    .select("role")
+    .eq("id", user.id)
+    .single();
+
+  if (profile?.role !== "tenured_professor") {
+    throw new Error("Only professors can assign teachers to courses");
+  }
+
+  const { data, error } = await supabase
+    .from("courses")
+    .update({ teacher_id: teacherId })
+    .eq("id", courseId)
+    .select()
+    .single();
+
+  if (error) throw error;
+
+  revalidatePath("/dashboard/professor/all-classes");
+  revalidatePath("/dashboard/teacher/courses");
+
+  return data;
 }

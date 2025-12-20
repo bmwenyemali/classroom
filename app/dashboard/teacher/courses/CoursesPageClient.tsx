@@ -134,9 +134,6 @@ export default function CoursesPageClient({
                   <span>{course.enrollments?.length || 0} students</span>
                 </div>
                 <div className="flex gap-2">
-                  <span className="bg-blue-100 text-blue-700 px-3 py-1 rounded-full text-xs font-medium">
-                    {course.semester || "No semester"}
-                  </span>
                   <span className="bg-green-100 text-green-700 px-3 py-1 rounded-full text-xs font-medium">
                     {course.credits || 3} credits
                   </span>
