@@ -1,48 +1,52 @@
-'use client'
+"use client";
 
-import { useState } from 'react'
-import { createCourse, updateCourse } from '@/lib/actions/courses'
-import { XMarkIcon } from '@heroicons/react/24/outline'
+import { useState } from "react";
+import { createCourse, updateCourse } from "@/lib/actions/courses";
+import { XMarkIcon } from "@heroicons/react/24/outline";
 
 interface CourseFormProps {
-  course?: any
-  onClose: () => void
-  onSuccess: () => void
+  course?: any;
+  onClose: () => void;
+  onSuccess: () => void;
 }
 
-export default function CourseForm({ course, onClose, onSuccess }: CourseFormProps) {
-  const [loading, setLoading] = useState(false)
-  const [error, setError] = useState<string | null>(null)
+export default function CourseForm({
+  course,
+  onClose,
+  onSuccess,
+}: CourseFormProps) {
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault()
-    setLoading(true)
-    setError(null)
+    e.preventDefault();
+    setLoading(true);
+    setError(null);
 
     try {
-      const formData = new FormData(e.currentTarget)
-      
+      const formData = new FormData(e.currentTarget);
+
       if (course) {
-        await updateCourse(course.id, formData)
+        await updateCourse(course.id, formData);
       } else {
-        await createCourse(formData)
+        await createCourse(formData);
       }
-      
-      onSuccess()
-      onClose()
+
+      onSuccess();
+      onClose();
     } catch (err: any) {
-      setError(err.message || 'An error occurred')
+      setError(err.message || "An error occurred");
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
-  }
+  };
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
       <div className="bg-white rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
         <div className="flex items-center justify-between p-6 border-b">
           <h2 className="text-2xl font-bold text-gray-900">
-            {course ? 'Edit Course' : 'Create New Course'}
+            {course ? "Edit Course" : "Create New Course"}
           </h2>
           <button
             onClick={onClose}
@@ -61,7 +65,10 @@ export default function CourseForm({ course, onClose, onSuccess }: CourseFormPro
           )}
 
           <div>
-            <label htmlFor="code" className="block text-sm font-medium text-gray-700 mb-2">
+            <label
+              htmlFor="code"
+              className="block text-sm font-medium text-gray-700 mb-2"
+            >
               Course Code *
             </label>
             <input
@@ -76,7 +83,10 @@ export default function CourseForm({ course, onClose, onSuccess }: CourseFormPro
           </div>
 
           <div>
-            <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-2">
+            <label
+              htmlFor="name"
+              className="block text-sm font-medium text-gray-700 mb-2"
+            >
               Course Name *
             </label>
             <input
@@ -91,13 +101,16 @@ export default function CourseForm({ course, onClose, onSuccess }: CourseFormPro
           </div>
 
           <div>
-            <label htmlFor="description" className="block text-sm font-medium text-gray-700 mb-2">
+            <label
+              htmlFor="description"
+              className="block text-sm font-medium text-gray-700 mb-2"
+            >
               Description
             </label>
             <textarea
               id="description"
               name="description"
-              defaultValue={course?.description || ''}
+              defaultValue={course?.description || ""}
               rows={4}
               placeholder="Course description..."
               className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
@@ -106,13 +119,16 @@ export default function CourseForm({ course, onClose, onSuccess }: CourseFormPro
 
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label htmlFor="semester" className="block text-sm font-medium text-gray-700 mb-2">
+              <label
+                htmlFor="semester"
+                className="block text-sm font-medium text-gray-700 mb-2"
+              >
                 Semester *
               </label>
               <select
                 id="semester"
                 name="semester"
-                defaultValue={course?.semester || ''}
+                defaultValue={course?.semester || ""}
                 required
                 className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               >
@@ -126,7 +142,10 @@ export default function CourseForm({ course, onClose, onSuccess }: CourseFormPro
             </div>
 
             <div>
-              <label htmlFor="credits" className="block text-sm font-medium text-gray-700 mb-2">
+              <label
+                htmlFor="credits"
+                className="block text-sm font-medium text-gray-700 mb-2"
+              >
                 Credits *
               </label>
               <input
@@ -156,11 +175,15 @@ export default function CourseForm({ course, onClose, onSuccess }: CourseFormPro
               disabled={loading}
               className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50"
             >
-              {loading ? 'Saving...' : course ? 'Update Course' : 'Create Course'}
+              {loading
+                ? "Saving..."
+                : course
+                ? "Update Course"
+                : "Create Course"}
             </button>
           </div>
         </form>
       </div>
     </div>
-  )
+  );
 }

@@ -1,60 +1,60 @@
-'use client'
+"use client";
 
-import { useState } from 'react'
-import { createGrade, updateGrade } from '@/lib/actions/grades'
-import { XMarkIcon } from '@heroicons/react/24/outline'
+import { useState } from "react";
+import { createGrade, updateGrade } from "@/lib/actions/grades";
+import { XMarkIcon } from "@heroicons/react/24/outline";
 
 interface GradeFormModalProps {
-  grade?: any
-  students?: any[]
-  courses?: any[]
-  defaultStudentId?: string
-  defaultCourseId?: string
-  onClose: () => void
-  onSuccess: () => void
+  grade?: any;
+  students?: any[];
+  courses?: any[];
+  defaultStudentId?: string;
+  defaultCourseId?: string;
+  onClose: () => void;
+  onSuccess: () => void;
 }
 
-export default function GradeFormModal({ 
-  grade, 
-  students, 
+export default function GradeFormModal({
+  grade,
+  students,
   courses,
   defaultStudentId,
   defaultCourseId,
-  onClose, 
-  onSuccess 
+  onClose,
+  onSuccess,
 }: GradeFormModalProps) {
-  const [loading, setLoading] = useState(false)
-  const [error, setError] = useState<string | null>(null)
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault()
-    setLoading(true)
-    setError(null)
+    e.preventDefault();
+    setLoading(true);
+    setError(null);
 
     try {
-      const formData = new FormData(e.currentTarget)
-      
+      const formData = new FormData(e.currentTarget);
+
       if (grade) {
-        await updateGrade(grade.id, formData)
+        await updateGrade(grade.id, formData);
       } else {
-        await createGrade(formData)
+        await createGrade(formData);
       }
-      
-      onSuccess()
-      onClose()
+
+      onSuccess();
+      onClose();
     } catch (err: any) {
-      setError(err.message || 'An error occurred')
+      setError(err.message || "An error occurred");
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
-  }
+  };
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
       <div className="bg-white rounded-lg shadow-xl max-w-2xl w-full">
         <div className="flex items-center justify-between p-6 border-b">
           <h2 className="text-2xl font-bold text-gray-900">
-            {grade ? 'Edit Grade' : 'Add New Grade'}
+            {grade ? "Edit Grade" : "Add New Grade"}
           </h2>
           <button
             onClick={onClose}
@@ -75,7 +75,10 @@ export default function GradeFormModal({
           {!grade && (
             <>
               <div>
-                <label htmlFor="student_id" className="block text-sm font-medium text-gray-700 mb-2">
+                <label
+                  htmlFor="student_id"
+                  className="block text-sm font-medium text-gray-700 mb-2"
+                >
                   Student *
                 </label>
                 <select
@@ -95,7 +98,10 @@ export default function GradeFormModal({
               </div>
 
               <div>
-                <label htmlFor="course_id" className="block text-sm font-medium text-gray-700 mb-2">
+                <label
+                  htmlFor="course_id"
+                  className="block text-sm font-medium text-gray-700 mb-2"
+                >
                   Course *
                 </label>
                 <select
@@ -117,7 +123,10 @@ export default function GradeFormModal({
           )}
 
           <div>
-            <label htmlFor="assignment_name" className="block text-sm font-medium text-gray-700 mb-2">
+            <label
+              htmlFor="assignment_name"
+              className="block text-sm font-medium text-gray-700 mb-2"
+            >
               Assignment Name *
             </label>
             <input
@@ -132,13 +141,16 @@ export default function GradeFormModal({
           </div>
 
           <div>
-            <label htmlFor="grade_type" className="block text-sm font-medium text-gray-700 mb-2">
+            <label
+              htmlFor="grade_type"
+              className="block text-sm font-medium text-gray-700 mb-2"
+            >
               Grade Type *
             </label>
             <select
               id="grade_type"
               name="grade_type"
-              defaultValue={grade?.grade_type || 'exam'}
+              defaultValue={grade?.grade_type || "exam"}
               required
               className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
             >
@@ -153,7 +165,10 @@ export default function GradeFormModal({
 
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label htmlFor="score" className="block text-sm font-medium text-gray-700 mb-2">
+              <label
+                htmlFor="score"
+                className="block text-sm font-medium text-gray-700 mb-2"
+              >
                 Score *
               </label>
               <input
@@ -170,7 +185,10 @@ export default function GradeFormModal({
             </div>
 
             <div>
-              <label htmlFor="max_score" className="block text-sm font-medium text-gray-700 mb-2">
+              <label
+                htmlFor="max_score"
+                className="block text-sm font-medium text-gray-700 mb-2"
+              >
                 Max Score *
               </label>
               <input
@@ -201,11 +219,11 @@ export default function GradeFormModal({
               disabled={loading}
               className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50"
             >
-              {loading ? 'Saving...' : grade ? 'Update Grade' : 'Add Grade'}
+              {loading ? "Saving..." : grade ? "Update Grade" : "Add Grade"}
             </button>
           </div>
         </form>
       </div>
     </div>
-  )
+  );
 }

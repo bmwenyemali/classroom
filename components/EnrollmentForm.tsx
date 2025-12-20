@@ -1,72 +1,70 @@
-'use client'
+"use client";
 
-import { useState } from 'react'
-import { enrollStudent, bulkEnrollStudents } from '@/lib/actions/enrollments'
-import { XMarkIcon } from '@heroicons/react/24/outline'
+import { useState } from "react";
+import { enrollStudent, bulkEnrollStudents } from "@/lib/actions/enrollments";
+import { XMarkIcon } from "@heroicons/react/24/outline";
 
 interface EnrollmentFormProps {
-  students: any[]
-  courses: any[]
-  defaultCourseId?: string
-  onClose: () => void
-  onSuccess: () => void
+  students: any[];
+  courses: any[];
+  defaultCourseId?: string;
+  onClose: () => void;
+  onSuccess: () => void;
 }
 
-export default function EnrollmentForm({ 
-  students, 
-  courses, 
+export default function EnrollmentForm({
+  students,
+  courses,
   defaultCourseId,
-  onClose, 
-  onSuccess 
+  onClose,
+  onSuccess,
 }: EnrollmentFormProps) {
-  const [loading, setLoading] = useState(false)
-  const [error, setError] = useState<string | null>(null)
-  const [bulkMode, setBulkMode] = useState(false)
-  const [selectedStudents, setSelectedStudents] = useState<string[]>([])
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [bulkMode, setBulkMode] = useState(false);
+  const [selectedStudents, setSelectedStudents] = useState<string[]>([]);
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault()
-    setLoading(true)
-    setError(null)
+    e.preventDefault();
+    setLoading(true);
+    setError(null);
 
     try {
-      const formData = new FormData(e.currentTarget)
-      const courseId = formData.get('course_id') as string
+      const formData = new FormData(e.currentTarget);
+      const courseId = formData.get("course_id") as string;
 
       if (bulkMode) {
         if (selectedStudents.length === 0) {
-          throw new Error('Please select at least one student')
+          throw new Error("Please select at least one student");
         }
-        await bulkEnrollStudents(courseId, selectedStudents)
+        await bulkEnrollStudents(courseId, selectedStudents);
       } else {
-        const studentId = formData.get('student_id') as string
-        await enrollStudent(courseId, studentId)
+        const studentId = formData.get("student_id") as string;
+        await enrollStudent(courseId, studentId);
       }
-      
-      onSuccess()
-      onClose()
+
+      onSuccess();
+      onClose();
     } catch (err: any) {
-      setError(err.message || 'An error occurred')
+      setError(err.message || "An error occurred");
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
-  }
+  };
 
   const toggleStudent = (studentId: string) => {
-    setSelectedStudents(prev => 
+    setSelectedStudents((prev) =>
       prev.includes(studentId)
-        ? prev.filter(id => id !== studentId)
+        ? prev.filter((id) => id !== studentId)
         : [...prev, studentId]
-    )
-  }
+    );
+  };
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
       <div className="bg-white rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
         <div className="flex items-center justify-between p-6 border-b">
-          <h2 className="text-2xl font-bold text-gray-900">
-            Enroll Students
-          </h2>
+          <h2 className="text-2xl font-bold text-gray-900">Enroll Students</h2>
           <button
             onClick={onClose}
             className="text-gray-400 hover:text-gray-600"
@@ -84,7 +82,10 @@ export default function EnrollmentForm({
           )}
 
           <div>
-            <label htmlFor="course_id" className="block text-sm font-medium text-gray-700 mb-2">
+            <label
+              htmlFor="course_id"
+              className="block text-sm font-medium text-gray-700 mb-2"
+            >
               Course *
             </label>
             <select
@@ -109,8 +110,8 @@ export default function EnrollmentForm({
               onClick={() => setBulkMode(false)}
               className={`px-4 py-2 rounded-lg ${
                 !bulkMode
-                  ? 'bg-blue-600 text-white'
-                  : 'bg-gray-100 text-gray-700'
+                  ? "bg-blue-600 text-white"
+                  : "bg-gray-100 text-gray-700"
               }`}
             >
               Single Student
@@ -120,8 +121,8 @@ export default function EnrollmentForm({
               onClick={() => setBulkMode(true)}
               className={`px-4 py-2 rounded-lg ${
                 bulkMode
-                  ? 'bg-blue-600 text-white'
-                  : 'bg-gray-100 text-gray-700'
+                  ? "bg-blue-600 text-white"
+                  : "bg-gray-100 text-gray-700"
               }`}
             >
               Multiple Students
@@ -130,7 +131,10 @@ export default function EnrollmentForm({
 
           {!bulkMode ? (
             <div>
-              <label htmlFor="student_id" className="block text-sm font-medium text-gray-700 mb-2">
+              <label
+                htmlFor="student_id"
+                className="block text-sm font-medium text-gray-700 mb-2"
+              >
                 Student *
               </label>
               <select
@@ -165,7 +169,8 @@ export default function EnrollmentForm({
                       className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
                     />
                     <span className="ml-3 text-sm">
-                      {student.full_name} <span className="text-gray-500">({student.email})</span>
+                      {student.full_name}{" "}
+                      <span className="text-gray-500">({student.email})</span>
                     </span>
                   </label>
                 ))}
@@ -187,11 +192,13 @@ export default function EnrollmentForm({
               disabled={loading}
               className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50"
             >
-              {loading ? 'Enrolling...' : `Enroll ${bulkMode ? 'Students' : 'Student'}`}
+              {loading
+                ? "Enrolling..."
+                : `Enroll ${bulkMode ? "Students" : "Student"}`}
             </button>
           </div>
         </form>
       </div>
     </div>
-  )
+  );
 }

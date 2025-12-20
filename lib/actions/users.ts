@@ -1,67 +1,69 @@
-'use server'
+"use server";
 
-import { createClient } from '@/lib/supabase/server'
+import { createClient } from "@/lib/supabase/server";
 
 export async function getStudents(searchTerm?: string) {
-  const supabase = await createClient()
-  
+  const supabase = await createClient();
+
   let query = supabase
-    .from('profiles')
-    .select('*')
-    .eq('role', 'student')
-    .order('full_name', { ascending: true })
+    .from("profiles")
+    .select("*")
+    .eq("role", "student")
+    .order("full_name", { ascending: true });
 
   if (searchTerm) {
-    query = query.or(`full_name.ilike.%${searchTerm}%,email.ilike.%${searchTerm}%`)
+    query = query.or(
+      `full_name.ilike.%${searchTerm}%,email.ilike.%${searchTerm}%`
+    );
   }
 
-  const { data, error } = await query
+  const { data, error } = await query;
 
-  if (error) throw error
-  return data
+  if (error) throw error;
+  return data;
 }
 
 export async function getTeachers() {
-  const supabase = await createClient()
-  
-  const { data, error } = await supabase
-    .from('profiles')
-    .select('*')
-    .in('role', ['teacher', 'tenured_professor'])
-    .order('full_name', { ascending: true })
+  const supabase = await createClient();
 
-  if (error) throw error
-  return data
+  const { data, error } = await supabase
+    .from("profiles")
+    .select("*")
+    .in("role", ["teacher", "tenured_professor"])
+    .order("full_name", { ascending: true });
+
+  if (error) throw error;
+  return data;
 }
 
 export async function getUserProfile(userId: string) {
-  const supabase = await createClient()
-  
-  const { data, error } = await supabase
-    .from('profiles')
-    .select('*')
-    .eq('id', userId)
-    .single()
+  const supabase = await createClient();
 
-  if (error) throw error
-  return data
+  const { data, error } = await supabase
+    .from("profiles")
+    .select("*")
+    .eq("id", userId)
+    .single();
+
+  if (error) throw error;
+  return data;
 }
 
 export async function updateProfile(userId: string, formData: FormData) {
-  const supabase = await createClient()
+  const supabase = await createClient();
 
   const profileData = {
-    full_name: formData.get('full_name') as string,
-    phone: formData.get('phone') as string,
-  }
+    full_name: formData.get("full_name") as string,
+    phone: formData.get("phone") as string,
+  };
 
   const { data, error } = await supabase
-    .from('profiles')
+    .from("profiles")
     .update(profileData)
-    .eq('id', userId)
+    .eq("id", userId)
     .select()
-    .single()
+    .single();
 
-  if (error) throw error
-  return data
+  if (error) throw error;
+  return data;
 }

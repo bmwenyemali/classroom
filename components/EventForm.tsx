@@ -1,57 +1,62 @@
-'use client'
+"use client";
 
-import { useState } from 'react'
-import { createEvent, updateEvent } from '@/lib/actions/events'
-import { XMarkIcon } from '@heroicons/react/24/outline'
+import { useState } from "react";
+import { createEvent, updateEvent } from "@/lib/actions/events";
+import { XMarkIcon } from "@heroicons/react/24/outline";
 
 interface EventFormProps {
-  event?: any
-  courses?: any[]
-  onClose: () => void
-  onSuccess: () => void
+  event?: any;
+  courses?: any[];
+  onClose: () => void;
+  onSuccess: () => void;
 }
 
-export default function EventForm({ event, courses, onClose, onSuccess }: EventFormProps) {
-  const [loading, setLoading] = useState(false)
-  const [error, setError] = useState<string | null>(null)
+export default function EventForm({
+  event,
+  courses,
+  onClose,
+  onSuccess,
+}: EventFormProps) {
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault()
-    setLoading(true)
-    setError(null)
+    e.preventDefault();
+    setLoading(true);
+    setError(null);
 
     try {
-      const formData = new FormData(e.currentTarget)
-      
+      const formData = new FormData(e.currentTarget);
+
       if (event) {
-        await updateEvent(event.id, formData)
+        await updateEvent(event.id, formData);
       } else {
-        await createEvent(formData)
+        await createEvent(formData);
       }
-      
-      onSuccess()
-      onClose()
+
+      onSuccess();
+      onClose();
     } catch (err: any) {
-      setError(err.message || 'An error occurred')
+      setError(err.message || "An error occurred");
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
-  }
+  };
 
   const formatDateTimeLocal = (dateString: string) => {
-    if (!dateString) return ''
-    const date = new Date(dateString)
-    const offset = date.getTimezoneOffset()
-    const localDate = new Date(date.getTime() - offset * 60 * 1000)
-    return localDate.toISOString().slice(0, 16)
-  }
+    if (!dateString) return "";
+    const date = new Date(dateString);
+    const offset = date.getTimezoneOffset();
+    const localDate = new Date(date.getTime() - offset * 60 * 1000);
+    return localDate.toISOString().slice(0, 16);
+  };
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
       <div className="bg-white rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
         <div className="flex items-center justify-between p-6 border-b">
           <h2 className="text-2xl font-bold text-gray-900">
-            {event ? 'Edit Event' : 'Create New Event'}
+            {event ? "Edit Event" : "Create New Event"}
           </h2>
           <button
             onClick={onClose}
@@ -70,7 +75,10 @@ export default function EventForm({ event, courses, onClose, onSuccess }: EventF
           )}
 
           <div>
-            <label htmlFor="title" className="block text-sm font-medium text-gray-700 mb-2">
+            <label
+              htmlFor="title"
+              className="block text-sm font-medium text-gray-700 mb-2"
+            >
               Event Title *
             </label>
             <input
@@ -85,13 +93,16 @@ export default function EventForm({ event, courses, onClose, onSuccess }: EventF
           </div>
 
           <div>
-            <label htmlFor="event_type" className="block text-sm font-medium text-gray-700 mb-2">
+            <label
+              htmlFor="event_type"
+              className="block text-sm font-medium text-gray-700 mb-2"
+            >
               Event Type *
             </label>
             <select
               id="event_type"
               name="event_type"
-              defaultValue={event?.event_type || 'class'}
+              defaultValue={event?.event_type || "class"}
               required
               className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
             >
@@ -105,13 +116,16 @@ export default function EventForm({ event, courses, onClose, onSuccess }: EventF
           </div>
 
           <div>
-            <label htmlFor="course_id" className="block text-sm font-medium text-gray-700 mb-2">
+            <label
+              htmlFor="course_id"
+              className="block text-sm font-medium text-gray-700 mb-2"
+            >
               Related Course (Optional)
             </label>
             <select
               id="course_id"
               name="course_id"
-              defaultValue={event?.course_id || ''}
+              defaultValue={event?.course_id || ""}
               className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
             >
               <option value="">No course (general event)</option>
@@ -124,13 +138,16 @@ export default function EventForm({ event, courses, onClose, onSuccess }: EventF
           </div>
 
           <div>
-            <label htmlFor="description" className="block text-sm font-medium text-gray-700 mb-2">
+            <label
+              htmlFor="description"
+              className="block text-sm font-medium text-gray-700 mb-2"
+            >
               Description
             </label>
             <textarea
               id="description"
               name="description"
-              defaultValue={event?.description || ''}
+              defaultValue={event?.description || ""}
               rows={3}
               placeholder="Event description..."
               className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
@@ -139,28 +156,38 @@ export default function EventForm({ event, courses, onClose, onSuccess }: EventF
 
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label htmlFor="start_time" className="block text-sm font-medium text-gray-700 mb-2">
+              <label
+                htmlFor="start_time"
+                className="block text-sm font-medium text-gray-700 mb-2"
+              >
                 Start Time *
               </label>
               <input
                 type="datetime-local"
                 id="start_time"
                 name="start_time"
-                defaultValue={event?.start_time ? formatDateTimeLocal(event.start_time) : ''}
+                defaultValue={
+                  event?.start_time ? formatDateTimeLocal(event.start_time) : ""
+                }
                 required
                 className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               />
             </div>
 
             <div>
-              <label htmlFor="end_time" className="block text-sm font-medium text-gray-700 mb-2">
+              <label
+                htmlFor="end_time"
+                className="block text-sm font-medium text-gray-700 mb-2"
+              >
                 End Time *
               </label>
               <input
                 type="datetime-local"
                 id="end_time"
                 name="end_time"
-                defaultValue={event?.end_time ? formatDateTimeLocal(event.end_time) : ''}
+                defaultValue={
+                  event?.end_time ? formatDateTimeLocal(event.end_time) : ""
+                }
                 required
                 className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               />
@@ -168,14 +195,17 @@ export default function EventForm({ event, courses, onClose, onSuccess }: EventF
           </div>
 
           <div>
-            <label htmlFor="location" className="block text-sm font-medium text-gray-700 mb-2">
+            <label
+              htmlFor="location"
+              className="block text-sm font-medium text-gray-700 mb-2"
+            >
               Location
             </label>
             <input
               type="text"
               id="location"
               name="location"
-              defaultValue={event?.location || ''}
+              defaultValue={event?.location || ""}
               placeholder="e.g., Room 101, Building A"
               className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
             />
@@ -195,11 +225,11 @@ export default function EventForm({ event, courses, onClose, onSuccess }: EventF
               disabled={loading}
               className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50"
             >
-              {loading ? 'Saving...' : event ? 'Update Event' : 'Create Event'}
+              {loading ? "Saving..." : event ? "Update Event" : "Create Event"}
             </button>
           </div>
         </form>
       </div>
     </div>
-  )
+  );
 }
