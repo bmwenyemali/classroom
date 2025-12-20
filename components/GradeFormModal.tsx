@@ -142,67 +142,23 @@ export default function GradeFormModal({
 
           <div>
             <label
-              htmlFor="grade_type"
+              htmlFor="score"
               className="block text-sm font-medium text-gray-700 mb-2"
             >
-              Grade Type *
+              Score (out of 100) *
             </label>
-            <select
-              id="grade_type"
-              name="grade_type"
-              defaultValue={grade?.grade_type || "exam"}
+            <input
+              type="number"
+              id="score"
+              name="score"
+              defaultValue={grade?.score}
               required
+              step="0.01"
+              min="0"
+              max="100"
+              placeholder="e.g., 85"
               className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-            >
-              <option value="exam">Exam</option>
-              <option value="quiz">Quiz</option>
-              <option value="assignment">Assignment</option>
-              <option value="project">Project</option>
-              <option value="homework">Homework</option>
-              <option value="participation">Participation</option>
-            </select>
-          </div>
-
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label
-                htmlFor="score"
-                className="block text-sm font-medium text-gray-700 mb-2"
-              >
-                Score *
-              </label>
-              <input
-                type="number"
-                id="score"
-                name="score"
-                defaultValue={grade?.score}
-                required
-                step="0.01"
-                min="0"
-                placeholder="e.g., 85"
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              />
-            </div>
-
-            <div>
-              <label
-                htmlFor="max_score"
-                className="block text-sm font-medium text-gray-700 mb-2"
-              >
-                Max Score *
-              </label>
-              <input
-                type="number"
-                id="max_score"
-                name="max_score"
-                defaultValue={grade?.max_score || 100}
-                required
-                step="0.01"
-                min="0"
-                placeholder="e.g., 100"
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              />
-            </div>
+            />
           </div>
 
           <div className="flex justify-end gap-4 pt-4">

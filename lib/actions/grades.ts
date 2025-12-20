@@ -18,7 +18,7 @@ export async function getGrades(studentId?: string, courseId?: string) {
       *,
       course:courses(id, code, name, credits),
       student:profiles!grades_student_id_fkey(id, full_name, email),
-      created_by_user:profiles!grades_created_by_fkey(id, full_name, email)
+      teacher:profiles!grades_teacher_id_fkey(id, full_name, email)
     `
     )
     .order("created_at", { ascending: false });
@@ -52,16 +52,15 @@ export async function getStudentGradeStats(studentId: string) {
 
   if (error) throw error;
 
-  // Calculate statistics
+  // Calculate statistics (score is already out of 100)
   const totalGrades = grades?.length || 0;
   const averageScore =
-    grades?.reduce((sum, g) => sum + (g.score / g.max_score) * 100, 0) /
-      totalGrades || 0;
+    grades?.reduce((sum, g) => sum + g.score, 0) / totalGrades || 0;
 
   // GPA calculation (4.0 scale)
   const gpa =
     grades?.reduce((sum, g) => {
-      const percentage = (g.score / g.max_score) * 100;
+      const percentage = g.score;
       let gradePoint = 0;
       if (percentage >= 90) gradePoint = 4.0;
       else if (percentage >= 80) gradePoint = 3.0;
@@ -82,7 +81,7 @@ export async function getStudentGradeStats(studentId: string) {
       };
     }
     acc[courseId].grades.push(grade);
-    acc[courseId].total += (grade.score / grade.max_score) * 100;
+    acc[courseId].total += grade.score;
     acc[courseId].count += 1;
     return acc;
   }, {});
@@ -115,9 +114,7 @@ export async function createGrade(formData: FormData) {
     course_id: formData.get("course_id") as string,
     assignment_name: formData.get("assignment_name") as string,
     score: parseFloat(formData.get("score") as string),
-    max_score: parseFloat(formData.get("max_score") as string),
-    grade_type: formData.get("grade_type") as string,
-    created_by: user.id,
+    teacher_id: user.id,
   };
 
   const { data, error } = await supabase
@@ -141,8 +138,6 @@ export async function updateGrade(id: string, formData: FormData) {
   const gradeData = {
     assignment_name: formData.get("assignment_name") as string,
     score: parseFloat(formData.get("score") as string),
-    max_score: parseFloat(formData.get("max_score") as string),
-    grade_type: formData.get("grade_type") as string,
   };
 
   const { data, error } = await supabase
@@ -179,8 +174,6 @@ export async function bulkCreateGrades(
     course_id: string;
     assignment_name: string;
     score: number;
-    max_score: number;
-    grade_type: string;
   }>
 ) {
   const supabase = await createClient();
@@ -190,14 +183,14 @@ export async function bulkCreateGrades(
   } = await supabase.auth.getUser();
   if (!user) throw new Error("Not authenticated");
 
-  const gradesWithCreator = grades.map((g) => ({
+  const gradesWithTeacher = grades.map((g) => ({
     ...g,
-    created_by: user.id,
+    teacher_id: user.id,
   }));
 
   const { data, error } = await supabase
     .from("grades")
-    .insert(gradesWithCreator)
+    .insert(gradesWithTeacher)
     .select();
 
   if (error) throw error;

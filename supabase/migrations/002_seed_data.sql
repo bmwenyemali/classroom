@@ -5,32 +5,31 @@
 -- 1. CREATE SAMPLE COURSES
 -- ============================================
 
-INSERT INTO courses (teacher_id, code, name, description, semester, credits) 
+INSERT INTO courses (teacher_id, code, name, description, credits) 
 SELECT 
   (SELECT id FROM profiles WHERE role = 'teacher' LIMIT 1),
   code,
   name,
   description,
-  semester,
   credits
 FROM (
   VALUES
-    ('CS101', 'Introduction to Computer Science', 'Learn the fundamentals of programming and computer science concepts', 'Fall 2024', 3),
-    ('CS201', 'Data Structures and Algorithms', 'Advanced programming concepts including arrays, linked lists, trees, and sorting algorithms', 'Fall 2024', 4),
-    ('MATH101', 'Calculus I', 'Introduction to differential and integral calculus', 'Fall 2024', 4),
-    ('MATH201', 'Linear Algebra', 'Study of vector spaces, matrices, and linear transformations', 'Spring 2025', 3),
-    ('ENG101', 'English Composition', 'Develop writing and critical thinking skills', 'Fall 2024', 3),
-    ('PHYS101', 'Physics I', 'Mechanics, heat, and sound with laboratory', 'Fall 2024', 4),
-    ('CHEM101', 'General Chemistry', 'Introduction to chemical principles and laboratory techniques', 'Spring 2025', 4),
-    ('BIO101', 'Introduction to Biology', 'Fundamentals of cellular and molecular biology', 'Fall 2024', 4),
-    ('HIST101', 'World History', 'Survey of major civilizations from ancient times to present', 'Fall 2024', 3),
-    ('PSYCH101', 'Introduction to Psychology', 'Overview of human behavior and mental processes', 'Spring 2025', 3),
-    ('ECON101', 'Principles of Economics', 'Introduction to microeconomic and macroeconomic theory', 'Fall 2024', 3),
-    ('ART101', 'Introduction to Art', 'Survey of art history and studio techniques', 'Spring 2025', 3),
-    ('CS301', 'Database Systems', 'Design and implementation of relational databases', 'Spring 2025', 3),
-    ('CS401', 'Software Engineering', 'Software development lifecycle and best practices', 'Spring 2025', 4),
-    ('STAT101', 'Statistics', 'Introduction to statistical methods and data analysis', 'Fall 2024', 3)
-) AS course_data(code, name, description, semester, credits);
+    ('CS101', 'Introduction to Computer Science', 'Learn the fundamentals of programming and computer science concepts', 3),
+    ('CS201', 'Data Structures and Algorithms', 'Advanced programming concepts including arrays, linked lists, trees, and sorting algorithms', 4),
+    ('MATH101', 'Calculus I', 'Introduction to differential and integral calculus', 4),
+    ('MATH201', 'Linear Algebra', 'Study of vector spaces, matrices, and linear transformations', 3),
+    ('ENG101', 'English Composition', 'Develop writing and critical thinking skills', 3),
+    ('PHYS101', 'Physics I', 'Mechanics, heat, and sound with laboratory', 4),
+    ('CHEM101', 'General Chemistry', 'Introduction to chemical principles and laboratory techniques', 4),
+    ('BIO101', 'Introduction to Biology', 'Fundamentals of cellular and molecular biology', 4),
+    ('HIST101', 'World History', 'Survey of major civilizations from ancient times to present', 3),
+    ('PSYCH101', 'Introduction to Psychology', 'Overview of human behavior and mental processes', 3),
+    ('ECON101', 'Principles of Economics', 'Introduction to microeconomic and macroeconomic theory', 3),
+    ('ART101', 'Introduction to Art', 'Survey of art history and studio techniques', 3),
+    ('CS301', 'Database Systems', 'Design and implementation of relational databases', 3),
+    ('CS401', 'Software Engineering', 'Software development lifecycle and best practices', 4),
+    ('STAT101', 'Statistics', 'Introduction to statistical methods and data analysis', 3)
+) AS course_data(code, name, description, credits);
 
 -- ============================================
 -- 2. ENROLL ALL STUDENTS IN RANDOM COURSES
@@ -57,30 +56,28 @@ ON CONFLICT (student_id, course_id) DO NOTHING;
 -- ============================================
 
 -- Generate 5-8 grades per enrollment with various assignment types
-INSERT INTO grades (student_id, course_id, assignment_name, score, max_score, grade_type, created_by)
+INSERT INTO grades (student_id, course_id, assignment_name, score, teacher_id)
 SELECT 
   e.student_id,
   e.course_id,
   assignment_name,
   -- Random score between 60-100
   floor(random() * 40 + 60)::numeric,
-  max_score,
-  grade_type,
   c.teacher_id
 FROM enrollments e
 JOIN courses c ON e.course_id = c.id
 CROSS JOIN LATERAL (
   SELECT * FROM (
     VALUES
-      ('Midterm Exam', 100, 'exam'),
-      ('Final Exam', 100, 'exam'),
-      ('Quiz 1', 50, 'quiz'),
-      ('Quiz 2', 50, 'quiz'),
-      ('Homework 1', 20, 'homework'),
-      ('Homework 2', 20, 'homework'),
-      ('Class Participation', 100, 'participation'),
-      ('Group Project', 100, 'project')
-  ) AS assignments(assignment_name, max_score, grade_type)
+      ('Midterm Exam'),
+      ('Final Exam'),
+      ('Quiz 1'),
+      ('Quiz 2'),
+      ('Homework 1'),
+      ('Homework 2'),
+      ('Class Participation'),
+      ('Group Project')
+  ) AS assignments(assignment_name)
   ORDER BY RANDOM()
   LIMIT floor(random() * 4 + 5)::int  -- 5 to 8 grades per enrollment
 ) AS random_assignments;
@@ -90,17 +87,14 @@ CROSS JOIN LATERAL (
 -- ============================================
 
 -- Create exam events for each course
-INSERT INTO events (title, description, event_type, course_id, start_time, end_time, location, created_by)
+INSERT INTO events (user_id, title, description, date, time)
 SELECT 
+  c.teacher_id,
   c.code || ' - ' || event_name,
   'Exam for ' || c.name,
-  'exam',
-  c.id,
   -- Random date in next 60 days
-  NOW() + (random() * 60 || ' days')::interval,
-  NOW() + (random() * 60 || ' days')::interval + '2 hours'::interval,
-  'Room ' || floor(random() * 300 + 100)::text,
-  c.teacher_id
+  (NOW() + (random() * 60 || ' days')::interval)::date,
+  '14:00'::time
 FROM courses c
 CROSS JOIN (
   VALUES
@@ -109,16 +103,13 @@ CROSS JOIN (
 ) AS events(event_name);
 
 -- Create assignment due dates
-INSERT INTO events (title, description, event_type, course_id, start_time, end_time, location, created_by)
+INSERT INTO events (user_id, title, description, date, time)
 SELECT 
+  c.teacher_id,
   c.code || ' - ' || event_name || ' Due',
   event_name || ' for ' || c.name,
-  'assignment',
-  c.id,
-  NOW() + (random() * 90 || ' days')::interval,
-  NOW() + (random() * 90 || ' days')::interval + '1 hour'::interval,
-  'Online Submission',
-  c.teacher_id
+  (NOW() + (random() * 90 || ' days')::interval)::date,
+  '23:59'::time
 FROM courses c
 CROSS JOIN (
   VALUES
@@ -132,16 +123,16 @@ CROSS JOIN (
 -- ============================================
 
 -- Check what was created
-SELECT 'Courses Created' as item, COUNT(*) as count FROM courses
+SELECT 'Courses Created' as item, COUNT(*)::text as count FROM courses
 UNION ALL
-SELECT 'Enrollments Created', COUNT(*) FROM enrollments
+SELECT 'Enrollments Created', COUNT(*)::text FROM enrollments
 UNION ALL
-SELECT 'Grades Created', COUNT(*) FROM grades
+SELECT 'Grades Created', COUNT(*)::text FROM grades
 UNION ALL
-SELECT 'Events Created', COUNT(*) FROM events;
+SELECT 'Events Created', COUNT(*)::text FROM events;
 
 -- Show sample data
-SELECT 'Sample Course:' as info, code, name FROM courses LIMIT 1
-UNION ALL
-SELECT 'Sample Grade:', g.assignment_name, g.score::text || '/' || g.max_score::text
+SELECT 'Sample Course: ' || code || ' - ' || name as info FROM courses LIMIT 1;
+
+SELECT 'Sample Grade: ' || g.assignment_name || ' - ' || g.score::text || '/100' as info
 FROM grades g LIMIT 1;
