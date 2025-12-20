@@ -160,20 +160,27 @@ WHERE c.code IN ('CS101', 'CS201', 'MATH101');
 -- PART 2: FIX RLS POLICIES (from 004_fix_rls_policies.sql)
 -- ============================================
 
+-- Drop existing conflicting policies if they exist
+DROP POLICY IF EXISTS "Teachers can view students" ON profiles;
+DROP POLICY IF EXISTS "Teachers can view other teachers" ON profiles;
+DROP POLICY IF EXISTS "Teachers can enroll students in their courses" ON enrollments;
+DROP POLICY IF EXISTS "Teachers can unenroll students from their courses" ON enrollments;
+DROP POLICY IF EXISTS "Professors can manage all enrollments" ON enrollments;
+
 -- Allow teachers to view all student profiles
-CREATE POLICY IF NOT EXISTS "Teachers can view students" ON profiles
+CREATE POLICY "Teachers can view students" ON profiles
   FOR SELECT USING (
     role = 'student' OR id = auth.uid()
   );
 
 -- Allow teachers to view other teachers
-CREATE POLICY IF NOT EXISTS "Teachers can view other teachers" ON profiles
+CREATE POLICY "Teachers can view other teachers" ON profiles
   FOR SELECT USING (
     role IN ('teacher', 'tenured_professor')
   );
 
 -- Allow teachers to create enrollments
-CREATE POLICY IF NOT EXISTS "Teachers can enroll students in their courses" ON enrollments
+CREATE POLICY "Teachers can enroll students in their courses" ON enrollments
   FOR INSERT WITH CHECK (
     EXISTS (
       SELECT 1 FROM courses 
@@ -182,7 +189,7 @@ CREATE POLICY IF NOT EXISTS "Teachers can enroll students in their courses" ON e
   );
 
 -- Allow teachers to delete enrollments
-CREATE POLICY IF NOT EXISTS "Teachers can unenroll students from their courses" ON enrollments
+CREATE POLICY "Teachers can unenroll students from their courses" ON enrollments
   FOR DELETE USING (
     EXISTS (
       SELECT 1 FROM courses 
@@ -191,7 +198,7 @@ CREATE POLICY IF NOT EXISTS "Teachers can unenroll students from their courses" 
   );
 
 -- Allow professors to manage all enrollments
-CREATE POLICY IF NOT EXISTS "Professors can manage all enrollments" ON enrollments
+CREATE POLICY "Professors can manage all enrollments" ON enrollments
   FOR ALL USING (
     EXISTS (
       SELECT 1 FROM profiles 
