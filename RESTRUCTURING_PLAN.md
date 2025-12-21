@@ -3,6 +3,7 @@
 ## Database Changes Needed
 
 ### 1. Run this SQL in Supabase:
+
 ```sql
 -- Add semester to courses
 ALTER TABLE courses ADD COLUMN IF NOT EXISTS semester TEXT;
@@ -14,12 +15,14 @@ ALTER TABLE grades DROP COLUMN IF EXISTS teacher_id;
 ## Role-Based Workflows
 
 ### Tenured Professor (Full Control)
+
 - **Can create courses** and assign teachers
 - **Can enroll students** in courses
 - **View course details** with student list and grades
 - **Filter by semester** using dropdown
 
 ### Teacher (Read & Grade Only)
+
 - **Cannot create courses** (assigned by professor)
 - **View assigned courses** only
 - **See students** filtered by semester
@@ -27,6 +30,7 @@ ALTER TABLE grades DROP COLUMN IF EXISTS teacher_id;
 - **Create calendar events** for their courses
 
 ### Student (View Only)
+
 - **See enrolled courses**
 - **See their teachers**
 - **View their grades**

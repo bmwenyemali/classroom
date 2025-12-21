@@ -45,12 +45,14 @@ export default async function StudentGradesPage() {
   };
 
   return (
-    <div className="p-8">
-      <h1 className="text-3xl font-bold text-gray-900 mb-8">My Grades</h1>
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-purple-50 to-pink-50 p-8">
+      <h1 className="text-4xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent mb-8">
+        My Grades
+      </h1>
 
       {/* Statistics Cards */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-        <div className="bg-gradient-to-br from-blue-500 to-blue-600 rounded-lg shadow-lg p-6 text-white">
+        <div className="bg-gradient-to-br from-blue-500 to-blue-600 rounded-2xl shadow-lg p-6 text-white hover:shadow-xl transition-all duration-300">
           <div className="flex items-center justify-between">
             <div>
               <p className="text-blue-100 text-sm font-medium mb-1">GPA</p>
@@ -93,11 +95,9 @@ export default async function StudentGradesPage() {
       </div>
 
       {/* Course Averages */}
-      <div className="bg-white rounded-lg shadow mb-8">
-        <div className="px-6 py-4 border-b border-gray-200">
-          <h2 className="text-xl font-bold text-gray-900">
-            Course Performance
-          </h2>
+      <div className="bg-white rounded-2xl shadow-lg mb-8 hover:shadow-xl transition-all duration-300">
+        <div className="px-6 py-4 border-b border-gray-200 bg-gradient-to-r from-blue-600 to-purple-600 rounded-t-2xl">
+          <h2 className="text-xl font-bold text-white">Course Performance</h2>
         </div>
         <div className="p-6">
           {stats.courseAverages.length === 0 ? (
@@ -156,10 +156,10 @@ export default async function StudentGradesPage() {
       </div>
 
       {/* Recent Grades */}
-      <div className="bg-white rounded-lg shadow">
-        <div className="px-6 py-4 border-b border-gray-200 flex items-center gap-2">
-          <ClockIcon className="h-5 w-5 text-gray-500" />
-          <h2 className="text-xl font-bold text-gray-900">Recent Grades</h2>
+      <div className="bg-white rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300">
+        <div className="px-6 py-4 border-b border-gray-200 flex items-center gap-2 bg-gradient-to-r from-blue-600 to-purple-600 rounded-t-2xl">
+          <ClockIcon className="h-5 w-5 text-white" />
+          <h2 className="text-xl font-bold text-white">Recent Grades</h2>
         </div>
         <div className="overflow-x-auto">
           {stats.recentGrades.length === 0 ? (
@@ -175,13 +175,7 @@ export default async function StudentGradesPage() {
                     Assignment
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Type
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Score
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Percentage
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Grade
@@ -190,7 +184,6 @@ export default async function StudentGradesPage() {
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
                 {stats.recentGrades.map((grade: any) => {
-                  const percentage = (grade.score / grade.max_score) * 100;
                   return (
                     <tr key={grade.id} className="hover:bg-gray-50">
                       <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
@@ -199,24 +192,16 @@ export default async function StudentGradesPage() {
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                         {grade.assignment_name}
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <span className="bg-gray-100 text-gray-700 px-2 py-1 rounded text-xs">
-                          {grade.grade_type}
-                        </span>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                        {grade.score}/{grade.max_score}
-                      </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm font-semibold">
-                        {percentage.toFixed(1)}%
+                        {grade.score.toFixed(1)}%
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         <span
                           className={`px-3 py-1 rounded-lg font-bold ${getGradeColor(
-                            percentage
+                            grade.score
                           )}`}
                         >
-                          {getLetterGrade(percentage)}
+                          {getLetterGrade(grade.score)}
                         </span>
                       </td>
                     </tr>

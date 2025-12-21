@@ -1,7 +1,6 @@
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
-import { getCourses, deleteCourse } from "@/lib/actions/courses";
-import CoursesPageClient from "./CoursesPageClient";
+import TeacherCoursesClient from "./TeacherCoursesClient";
 
 export default async function TeacherCoursesPage() {
   const supabase = await createClient();
@@ -21,7 +20,18 @@ export default async function TeacherCoursesPage() {
     redirect("/dashboard");
   }
 
-  const courses = await getCourses();
+  // Get courses assigned to this teacher only
+  const { data: courses } = await supabase
+    .from("courses")
+    .select(
+      `
+      *,
+      enrollments:enrollments(count),
+      teacher:profiles!courses_teacher_id_fkey(id, full_name, email)
+    `
+    )
+    .eq("teacher_id", user.id)
+    .order("created_at", { ascending: false });
 
-  return <CoursesPageClient courses={courses} />;
+  return <TeacherCoursesClient courses={courses || []} />;
 }

@@ -176,14 +176,12 @@ export async function bulkCreateGrades(
 ) {
   const supabase = await createClient();
 
-  const {  data: { user },
+  const {
+    data: { user },
   } = await supabase.auth.getUser();
   if (!user) throw new Error("Not authenticated");
 
-  const { data, error} = await supabase
-    .from("grades")
-    .insert(grades)
-    .select();
+  const { data, error } = await supabase.from("grades").insert(grades).select();
 
   if (error) throw error;
 
