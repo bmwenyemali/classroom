@@ -16,9 +16,8 @@ export async function getGrades(studentId?: string, courseId?: string) {
     .select(
       `
       *,
-      course:courses(id, code, name, credits),
-      student:profiles!grades_student_id_fkey(id, full_name, email),
-      teacher:profiles!grades_teacher_id_fkey(id, full_name, email)
+      course:courses(id, code, name, credits, teacher:profiles!courses_teacher_id_fkey(id, full_name, email)),
+      student:profiles!grades_student_id_fkey(id, full_name, email)
     `
     )
     .order("created_at", { ascending: false });
@@ -114,7 +113,6 @@ export async function createGrade(formData: FormData) {
     course_id: formData.get("course_id") as string,
     assignment_name: formData.get("assignment_name") as string,
     score: parseFloat(formData.get("score") as string),
-    teacher_id: user.id,
   };
 
   const { data, error } = await supabase
@@ -178,19 +176,13 @@ export async function bulkCreateGrades(
 ) {
   const supabase = await createClient();
 
-  const {
-    data: { user },
+  const {  data: { user },
   } = await supabase.auth.getUser();
   if (!user) throw new Error("Not authenticated");
 
-  const gradesWithTeacher = grades.map((g) => ({
-    ...g,
-    teacher_id: user.id,
-  }));
-
-  const { data, error } = await supabase
+  const { data, error} = await supabase
     .from("grades")
-    .insert(gradesWithTeacher)
+    .insert(grades)
     .select();
 
   if (error) throw error;

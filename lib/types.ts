@@ -16,6 +16,7 @@ export interface Course {
   name: string;
   description: string | null;
   teacher_id: string;
+  semester: string | null;
   credits: number;
   created_at: string;
   teacher?: Profile;
@@ -34,11 +35,8 @@ export interface Grade {
   id: string;
   student_id: string;
   course_id: string;
-  assignment_name: string | null;
+  assignment_name: string;
   score: number;
-  max_score: number;
-  grade_type: string | null;
-  created_by: string;
   created_at: string;
   course?: Course;
   student?: Profile;

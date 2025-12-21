@@ -69,11 +69,23 @@ export async function createCourse(formData: FormData) {
   } = await supabase.auth.getUser();
   if (!user) throw new Error("Not authenticated");
 
+  // Verify user is a professor
+  const { data: profile } = await supabase
+    .from("profiles")
+    .select("role")
+    .eq("id", user.id)
+    .single();
+
+  if (profile?.role !== "tenured_professor") {
+    throw new Error("Only professors can create courses");
+  }
+
   const courseData = {
     code: formData.get("code") as string,
     name: formData.get("name") as string,
     description: formData.get("description") as string,
-    teacher_id: user.id,
+    teacher_id: formData.get("teacher_id") as string, // Professor assigns teacher
+    semester: formData.get("semester") as string,
     credits: parseInt((formData.get("credits") as string) || "3"),
   };
 
