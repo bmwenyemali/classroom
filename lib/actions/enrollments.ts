@@ -20,7 +20,7 @@ export async function getEnrollments(courseId?: string) {
       student:profiles!enrollments_student_id_fkey(id, full_name, email)
     `
     )
-    .order("enrolled_at", { ascending: false });
+    .order("created_at", { ascending: false });
 
   if (courseId) {
     query = query.eq("course_id", courseId);
@@ -50,7 +50,7 @@ export async function getStudentEnrollments(studentId: string) {
     `
     )
     .eq("student_id", studentId)
-    .order("enrolled_at", { ascending: false });
+    .order("created_at", { ascending: false });
 
   if (error) throw error;
   return data;

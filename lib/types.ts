@@ -25,7 +25,7 @@ export interface Enrollment {
   id: string;
   student_id: string;
   course_id: string;
-  enrolled_at: string;
+  created_at: string;
   course?: Course;
   student?: Profile;
 }

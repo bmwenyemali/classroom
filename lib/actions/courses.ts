@@ -49,7 +49,7 @@ export async function getCourse(id: string) {
       teacher:profiles!courses_teacher_id_fkey(id, full_name, email),
       enrollments(
         id,
-        enrolled_at,
+        created_at,
         student:profiles!enrollments_student_id_fkey(id, full_name, email)
       )
     `

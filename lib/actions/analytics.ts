@@ -225,15 +225,15 @@ export async function getEnrollmentTrends(months: number = 6) {
 
   const { data: enrollments } = await supabase
     .from("enrollments")
-    .select("enrolled_at")
-    .gte("enrolled_at", startDate.toISOString())
-    .order("enrolled_at", { ascending: true });
+    .select("created_at")
+    .gte("created_at", startDate.toISOString())
+    .order("created_at", { ascending: true });
 
   if (!enrollments) return [];
 
   // Group by month
   const monthlyData = enrollments.reduce((acc: any, enrollment) => {
-    const date = new Date(enrollment.enrolled_at);
+    const date = new Date(enrollment.created_at);
     const monthKey = `${date.getFullYear()}-${String(
       date.getMonth() + 1
     ).padStart(2, "0")}`;
@@ -277,12 +277,12 @@ export async function getRecentActivity(limit: number = 20) {
       .from("enrollments")
       .select(
         `
-        enrolled_at,
+        created_at,
         student:profiles!enrollments_student_id_fkey(full_name),
         course:courses(code, name)
       `
       )
-      .order("enrolled_at", { ascending: false })
+      .order("created_at", { ascending: false })
       .limit(limit),
 
     supabase
@@ -307,7 +307,7 @@ export async function getRecentActivity(limit: number = 20) {
     })),
     ...(recentEnrollments || []).map((e: any) => ({
       type: "enrollment",
-      timestamp: e.enrolled_at,
+      timestamp: e.created_at,
       description: `${e.student?.full_name} enrolled in ${e.course?.code} - ${e.course?.name}`,
     })),
     ...(recentEvents || []).map((e: any) => ({
