@@ -5,9 +5,10 @@ import TeacherCourseDetailClient from "./TeacherCourseDetailClient";
 export default async function TeacherCourseDetailPage({
   params,
 }: {
-  params: { id: string };
+  params: Promise<{ id: string }>;
 }) {
   const supabase = await createClient();
+  const { id } = await params;
 
   const {
     data: { user },
@@ -38,7 +39,7 @@ export default async function TeacherCourseDetailPage({
       )
     `
     )
-    .eq("id", params.id)
+    .eq("id", id)
     .eq("teacher_id", user.id)
     .single();
 
@@ -55,7 +56,7 @@ export default async function TeacherCourseDetailPage({
       student:profiles!grades_student_id_fkey(id, full_name, email)
     `
     )
-    .eq("course_id", params.id)
+    .eq("course_id", id)
     .order("created_at", { ascending: false });
 
   return (

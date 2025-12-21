@@ -4,11 +4,25 @@
 
 -- Add semester column to courses
 ALTER TABLE courses 
-ADD COLUMN semester TEXT;
+ADD COLUMN IF NOT EXISTS semester TEXT;
+
+-- Drop the RLS policy that depends on teacher_id
+DROP POLICY IF EXISTS "Teachers can manage grades for their courses" ON grades;
 
 -- Drop teacher_id from grades (it's redundant)
 ALTER TABLE grades 
 DROP COLUMN IF EXISTS teacher_id;
+
+-- Recreate the RLS policy using course.teacher_id instead
+CREATE POLICY "Teachers can manage grades for their courses" ON grades
+FOR ALL
+USING (
+  EXISTS (
+    SELECT 1 FROM courses
+    WHERE courses.id = grades.course_id
+    AND courses.teacher_id = auth.uid()
+  )
+);
 
 -- Update verification query
 SELECT 

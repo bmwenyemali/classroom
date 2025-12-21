@@ -7,9 +7,10 @@ import ProfessorCourseDetailClient from "./CourseDetailClient";
 export default async function ProfessorCourseDetailPage({
   params,
 }: {
-  params: { id: string };
+  params: Promise<{ id: string }>;
 }) {
   const supabase = await createClient();
+  const { id } = await params;
 
   const {
     data: { user },
@@ -26,7 +27,7 @@ export default async function ProfessorCourseDetailPage({
     redirect("/dashboard");
   }
 
-  const course = await getCourse(params.id);
+  const course = await getCourse(id);
   const students = await getStudents();
 
   // Get grades for this course
@@ -38,7 +39,7 @@ export default async function ProfessorCourseDetailPage({
       student:profiles!grades_student_id_fkey(id, full_name, email)
     `
     )
-    .eq("course_id", params.id)
+    .eq("course_id", id)
     .order("created_at", { ascending: false });
 
   return (
