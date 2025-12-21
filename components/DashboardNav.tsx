@@ -72,6 +72,18 @@ const navigation: NavItem[] = [
     roles: ["tenured_professor"],
   },
   {
+    name: "Courses",
+    href: "/dashboard/professor/courses",
+    icon: BookOpenIcon,
+    roles: ["tenured_professor"],
+  },
+  {
+    name: "User Management",
+    href: "/dashboard/professor/users",
+    icon: UserGroupIcon,
+    roles: ["tenured_professor"],
+  },
+  {
     name: "All Grades",
     href: "/dashboard/professor/all-grades",
     icon: ChartBarIcon,

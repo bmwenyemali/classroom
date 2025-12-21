@@ -4,13 +4,11 @@ import { createClient } from "@/lib/supabase/client";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import type { UserRole } from "@/lib/types";
 
 export default function SignupPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [fullName, setFullName] = useState("");
-  const [role, setRole] = useState<UserRole>("student");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const router = useRouter();
@@ -27,7 +25,7 @@ export default function SignupPage() {
       options: {
         data: {
           full_name: fullName,
-          role: role,
+          role: "student",
         },
       },
     });
@@ -120,25 +118,10 @@ export default function SignupPage() {
             required
             minLength={6}
           />
-        </div>
-
-        <div>
-          <label
-            htmlFor="role"
-            className="block text-sm font-medium text-gray-700 mb-1"
-          >
-            I am a...
-          </label>
-          <select
-            id="role"
-            value={role}
-            onChange={(e) => setRole(e.target.value as UserRole)}
-            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-          >
-            <option value="student">Student</option>
-            <option value="teacher">Teacher</option>
-            <option value="tenured_professor">Tenured Professor</option>
-          </select>
+          <p className="mt-2 text-sm text-gray-500">
+            All new accounts are created as students. Contact your administrator
+            to change your role.
+          </p>
         </div>
 
         <button
