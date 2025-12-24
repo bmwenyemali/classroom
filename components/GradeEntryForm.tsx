@@ -41,21 +41,15 @@ export default function GradeEntryForm({
     setLoading(true);
     setMessage("");
 
-    if (!teacherId) {
-      setMessage("Teacher ID is required");
-      setLoading(false);
-      return;
-    }
-
     const { error } = await supabase.from("grades").insert({
       student_id: selectedStudent,
       course_id: selectedCourse,
-      teacher_id: teacherId,
       assignment_name: assignmentName,
       score: parseFloat(score),
     });
 
     if (error) {
+      console.error("Error adding grade:", error);
       setMessage("Error adding grade");
     } else {
       setMessage("Grade added successfully!");

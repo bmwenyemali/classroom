@@ -1,24 +1,47 @@
--- ============================================
--- FIX: Update Profile Policy
--- ============================================
--- DROP the old policy and recreate it with WITH CHECK
--- ============================================
+-- Enable RLS on profiles
+ALTER TABLE profiles ENABLE ROW LEVEL SECURITY;
 
--- Drop the incorrect policy
-DROP POLICY IF EXISTS "Users can update their own profile" ON profiles;
+-- 1. Users can view their own profile (needed for dashboard)
+CREATE POLICY "Users can view their own profile" 
+ON profiles FOR SELECT 
+USING (auth.uid() = id);
 
--- Recreate with both USING and WITH CHECK
+-- 2. Users can update their own profile (needed for settings)
 CREATE POLICY "Users can update their own profile" 
 ON profiles FOR UPDATE 
-USING (auth.uid() = id)
-WITH CHECK (auth.uid() = id);
+USING (auth.uid() = id);
 
--- ============================================
--- EXPLANATION:
--- USING clause: Checks if the user can UPDATE this row (can they see it?)
--- WITH CHECK clause: Validates the updated data (are they still updating their own profile?)
--- 
--- For UPDATE operations, you need BOTH clauses to ensure:
--- 1. User can only update their own profile (USING)
--- 2. User cannot change the ID to someone else's (WITH CHECK)
--- ============================================
+-- 3. Professors can view all profiles (needed for user management)
+
+ALTER TABLE profiles ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "Professors can view all profiles" 
+ON profiles FOR SELECT 
+USING (
+  EXISTS (
+    SELECT 1 FROM profiles 
+    WHERE id = auth.uid() 
+    AND role = 'tenured_professor'
+  )
+);
+
+-- 4. Professors can update any profile (needed to change roles)
+CREATE POLICY "Professors can update all profiles" 
+ON profiles FOR UPDATE 
+USING (
+  EXISTS (
+    SELECT 1 FROM profiles 
+    WHERE id = auth.uid() 
+    AND role = 'tenured_professor'
+  )
+);
+
+-- 5. Professors can delete any profile (needed for user management)
+CREATE POLICY "Professors can delete profiles" 
+ON profiles FOR DELETE 
+USING (
+  EXISTS (
+    SELECT 1 FROM profiles 
+    WHERE id = auth.uid() 
+    AND role = 'tenured_professor'
+  )
+);
