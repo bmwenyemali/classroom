@@ -181,12 +181,28 @@ USING (
 -- ============================================
 -- EVENTS TABLE - RLS POLICIES
 -- ============================================
+-- NOTE: Events table only has user_id (personal events)
+-- No course_id column exists in the current schema
+-- ============================================
 
 -- Drop existing policies
 DROP POLICY IF EXISTS "Students can view events" ON events;
 DROP POLICY IF EXISTS "Teachers can manage events for their courses" ON events;
 DROP POLICY IF EXISTS "Professors can manage all events" ON events;
 DROP POLICY IF EXISTS "Users can manage their own events" ON events;
+DROP POLICY IF EXISTS "Users can view their events" ON events;
+DROP POLICY IF EXISTS "Students can view course events" ON events;
+DROP POLICY IF EXISTS "Teachers can view course events" ON events;
+DROP POLICY IF EXISTS "Professors can view all events" ON events;
+DROP POLICY IF EXISTS "Users can create events" ON events;
+DROP POLICY IF EXISTS "Teachers can create course events" ON events;
+DROP POLICY IF EXISTS "Professors can create events" ON events;
+DROP POLICY IF EXISTS "Users can update their events" ON events;
+DROP POLICY IF EXISTS "Teachers can update course events" ON events;
+DROP POLICY IF EXISTS "Professors can update events" ON events;
+DROP POLICY IF EXISTS "Users can delete their events" ON events;
+DROP POLICY IF EXISTS "Teachers can delete course events" ON events;
+DROP POLICY IF EXISTS "Professors can delete events" ON events;
 
 -- Enable RLS
 ALTER TABLE events ENABLE ROW LEVEL SECURITY;
@@ -196,107 +212,39 @@ CREATE POLICY "Users can view their events"
 ON events FOR SELECT
 USING (user_id = auth.uid());
 
--- POLICY 2: Users can view events for courses they're enrolled in
-CREATE POLICY "Students can view course events"
-ON events FOR SELECT
-USING (
-  course_id IS NOT NULL
-  AND EXISTS (
-    SELECT 1 FROM enrollments
-    WHERE enrollments.course_id = events.course_id
-    AND enrollments.student_id = auth.uid()
-  )
-);
-
--- POLICY 3: Teachers can view events for their courses
-CREATE POLICY "Teachers can view course events"
-ON events FOR SELECT
-USING (
-  course_id IS NOT NULL
-  AND EXISTS (
-    SELECT 1 FROM courses
-    WHERE courses.id = events.course_id
-    AND courses.teacher_id = auth.uid()
-  )
-);
-
--- POLICY 4: Professors can view all events
+-- POLICY 2: Professors can view all events
 CREATE POLICY "Professors can view all events"
 ON events FOR SELECT
 USING (public.get_my_role() = 'tenured_professor');
 
--- POLICY 5: Users can create their own events
-CREATE POLICY "Users can create events"
+-- POLICY 3: Users can create their own events
+CREATE POLICY "Users can create their events"
 ON events FOR INSERT
 WITH CHECK (user_id = auth.uid());
 
--- POLICY 6: Teachers can create events for their courses
-CREATE POLICY "Teachers can create course events"
-ON events FOR INSERT
-WITH CHECK (
-  course_id IS NOT NULL
-  AND EXISTS (
-    SELECT 1 FROM courses
-    WHERE courses.id = events.course_id
-    AND courses.teacher_id = auth.uid()
-  )
-);
-
--- POLICY 7: Professors can create any event
+-- POLICY 4: Professors can create events for any user
 CREATE POLICY "Professors can create events"
 ON events FOR INSERT
 WITH CHECK (public.get_my_role() = 'tenured_professor');
 
--- POLICY 8: Users can update their own events
+-- POLICY 5: Users can update their own events
 CREATE POLICY "Users can update their events"
 ON events FOR UPDATE
 USING (user_id = auth.uid())
 WITH CHECK (user_id = auth.uid());
 
--- POLICY 9: Teachers can update events for their courses
-CREATE POLICY "Teachers can update course events"
-ON events FOR UPDATE
-USING (
-  course_id IS NOT NULL
-  AND EXISTS (
-    SELECT 1 FROM courses
-    WHERE courses.id = events.course_id
-    AND courses.teacher_id = auth.uid()
-  )
-)
-WITH CHECK (
-  course_id IS NOT NULL
-  AND EXISTS (
-    SELECT 1 FROM courses
-    WHERE courses.id = events.course_id
-    AND courses.teacher_id = auth.uid()
-  )
-);
-
--- POLICY 10: Professors can update any event
+-- POLICY 6: Professors can update any event
 CREATE POLICY "Professors can update events"
 ON events FOR UPDATE
 USING (public.get_my_role() = 'tenured_professor')
 WITH CHECK (public.get_my_role() = 'tenured_professor');
 
--- POLICY 11: Users can delete their own events
+-- POLICY 7: Users can delete their own events
 CREATE POLICY "Users can delete their events"
 ON events FOR DELETE
 USING (user_id = auth.uid());
 
--- POLICY 12: Teachers can delete events for their courses
-CREATE POLICY "Teachers can delete course events"
-ON events FOR DELETE
-USING (
-  course_id IS NOT NULL
-  AND EXISTS (
-    SELECT 1 FROM courses
-    WHERE courses.id = events.course_id
-    AND courses.teacher_id = auth.uid()
-  )
-);
-
--- POLICY 13: Professors can delete any event
+-- POLICY 8: Professors can delete any event
 CREATE POLICY "Professors can delete events"
 ON events FOR DELETE
 USING (public.get_my_role() = 'tenured_professor');
