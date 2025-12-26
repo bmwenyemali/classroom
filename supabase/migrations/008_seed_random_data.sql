@@ -128,13 +128,12 @@ BEGIN
       assignment_name := assignment_names[1 + floor(random() * array_length(assignment_names, 1))::int];
       score_value := 50 + (random() * 50); -- Scores between 50 and 100
       
-      INSERT INTO grades (student_id, course_id, assignment_name, score, graded_at)
+      INSERT INTO grades (student_id, course_id, assignment_name, score)
       VALUES (
         enrollment_rec.student_id,
         enrollment_rec.course_id,
         assignment_name || ' - Part ' || i,
-        score_value,
-        NOW() - (random() * interval '30 days')
+        score_value
       )
       ON CONFLICT DO NOTHING;
     END LOOP;
