@@ -17,12 +17,14 @@ interface LibraryDetailClientProps {
   library: Library;
   books: Book[];
   userLocation: [number, number] | null;
+  homeLocation: [number, number] | null;
 }
 
 export default function LibraryDetailClient({
   library,
   books,
   userLocation,
+  homeLocation,
 }: LibraryDetailClientProps) {
   const [showDirections, setShowDirections] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
@@ -246,6 +248,7 @@ export default function LibraryDetailClient({
                 libraries={[library]}
                 selectedLibrary={library}
                 userLocation={userLocation}
+                homeLocation={homeLocation}
                 showDirections={showDirections}
                 height="600px"
               />

@@ -7,23 +7,87 @@ import { useRouter } from "next/navigation";
 export default function ProfileForm({ profile }: { profile: any }) {
   const [fullName, setFullName] = useState(profile?.full_name || "");
   const [phone, setPhone] = useState(profile?.phone || "");
+  const [homeAddress, setHomeAddress] = useState(profile?.home_address || "");
   const [loading, setLoading] = useState(false);
+  const [geocoding, setGeocoding] = useState(false);
   const [message, setMessage] = useState("");
   const router = useRouter();
   const supabase = createClient();
+
+  const geocodeAddress = async (
+    address: string
+  ): Promise<{ latitude: number; longitude: number } | null> => {
+    if (!address.trim()) return null;
+
+    try {
+      const mapboxToken =
+        process.env.NEXT_PUBLIC_MAPBOX_TOKEN ||
+        "pk.eyJ1IjoiYmllbnZlbnUxMiIsImEiOiJjbWpuMGlrMjQxYnJ0M2dxMXJ1Mmk4dndlIn0.fhS-CcoTfYUN6i4oIrHYrQ";
+      const encodedAddress = encodeURIComponent(address);
+      const proximity = "15.3136,-4.3276"; // Kinshasa center for better results
+
+      const response = await fetch(
+        `https://api.mapbox.com/geocoding/v5/mapbox.places/${encodedAddress}.json?proximity=${proximity}&access_token=${mapboxToken}`
+      );
+
+      if (!response.ok) throw new Error("Geocoding failed");
+
+      const data = await response.json();
+      if (data.features && data.features.length > 0) {
+        const [longitude, latitude] = data.features[0].center;
+        return { latitude, longitude };
+      }
+
+      return null;
+    } catch (error) {
+      console.error("Geocoding error:", error);
+      return null;
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     setMessage("");
 
+    let coordinates = null;
+
+    // Geocode address if it changed
+    if (homeAddress && homeAddress !== profile?.home_address) {
+      setGeocoding(true);
+      coordinates = await geocodeAddress(homeAddress);
+      setGeocoding(false);
+
+      if (!coordinates) {
+        setMessage("Could not find address. Please check and try again.");
+        setLoading(false);
+        return;
+      }
+    }
+
+    const updateData: any = {
+      full_name: fullName,
+      phone: phone,
+      updated_at: new Date().toISOString(),
+    };
+
+    // Add address data if provided
+    if (homeAddress) {
+      updateData.home_address = homeAddress;
+      if (coordinates) {
+        updateData.home_latitude = coordinates.latitude;
+        updateData.home_longitude = coordinates.longitude;
+      }
+    } else {
+      // Clear address data if removed
+      updateData.home_address = null;
+      updateData.home_latitude = null;
+      updateData.home_longitude = null;
+    }
+
     const { error } = await supabase
       .from("profiles")
-      .update({
-        full_name: fullName,
-        phone: phone,
-        updated_at: new Date().toISOString(),
-      })
+      .update(updateData)
       .eq("id", profile.id);
 
     if (error) {
@@ -100,6 +164,27 @@ export default function ProfileForm({ profile }: { profile: any }) {
       </div>
 
       <div>
+        <label
+          htmlFor="homeAddress"
+          className="block text-sm font-medium text-gray-700 mb-1"
+        >
+          Home Address
+        </label>
+        <input
+          id="homeAddress"
+          type="text"
+          value={homeAddress}
+          onChange={(e) => setHomeAddress(e.target.value)}
+          placeholder="e.g., Avenue Kalembelembe, Kinshasa"
+          className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+        />
+        <p className="text-xs text-gray-500 mt-1">
+          Enter your home address to see libraries near you. We'll automatically
+          find the location.
+        </p>
+      </div>
+
+      <div>
         <label className="block text-sm font-medium text-gray-700 mb-1">
           Role
         </label>
@@ -116,7 +201,11 @@ export default function ProfileForm({ profile }: { profile: any }) {
         disabled={loading}
         className="w-full bg-blue-600 text-white py-2 rounded-lg hover:bg-blue-700 transition disabled:opacity-50"
       >
-        {loading ? "Saving..." : "Update Profile"}
+        {geocoding
+          ? "Finding address..."
+          : loading
+          ? "Saving..."
+          : "Update Profile"}
       </button>
     </form>
   );

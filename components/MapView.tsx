@@ -3,7 +3,9 @@
 import { useEffect, useRef, useState } from "react";
 import mapboxgl from "mapbox-gl";
 import MapboxDirections from "@mapbox/mapbox-gl-directions/dist/mapbox-gl-directions";
+import MapboxGeocoder from "@mapbox/mapbox-gl-geocoder";
 import "@mapbox/mapbox-gl-directions/dist/mapbox-gl-directions.css";
+import "@mapbox/mapbox-gl-geocoder/dist/mapbox-gl-geocoder.css";
 import "mapbox-gl/dist/mapbox-gl.css";
 import { Library } from "@/lib/types/library";
 
@@ -15,6 +17,7 @@ interface MapViewProps {
   libraries: Library[];
   selectedLibrary?: Library | null;
   userLocation?: [number, number] | null;
+  homeLocation?: [number, number] | null;
   showDirections?: boolean;
   height?: string;
 }
@@ -23,6 +26,7 @@ export default function MapView({
   libraries,
   selectedLibrary,
   userLocation,
+  homeLocation,
   showDirections = false,
   height = "600px",
 }: MapViewProps) {
@@ -30,6 +34,7 @@ export default function MapView({
   const map = useRef<mapboxgl.Map | null>(null);
   const [mapLoaded, setMapLoaded] = useState(false);
   const [userMarker, setUserMarker] = useState<mapboxgl.Marker | null>(null);
+  const [homeMarker, setHomeMarker] = useState<mapboxgl.Marker | null>(null);
   const directionsRef = useRef<MapboxDirections | null>(null);
 
   // Initialize map
@@ -38,12 +43,13 @@ export default function MapView({
 
     // Center on Kinshasa by default
     const defaultCenter: [number, number] = [15.3136, -4.3276];
+    const centerPoint = homeLocation || userLocation || defaultCenter;
 
     map.current = new mapboxgl.Map({
       container: mapContainer.current,
       style: "mapbox://styles/mapbox/streets-v12",
-      center: userLocation || defaultCenter,
-      zoom: userLocation ? 13 : 11,
+      center: centerPoint,
+      zoom: homeLocation || userLocation ? 13 : 11,
     });
 
     map.current.addControl(new mapboxgl.NavigationControl(), "top-right");
@@ -58,6 +64,22 @@ export default function MapView({
       }),
       "top-right"
     );
+
+    // Add geocoder (search) control
+    const geocoder = new MapboxGeocoder({
+      accessToken: mapboxgl.accessToken!,
+      mapboxgl: mapboxgl,
+      marker: false,
+      placeholder:
+        "Search for places (e.g., Hopital Kalembelembe, Stade de Martyr)",
+      proximity: {
+        longitude: 15.3136,
+        latitude: -4.3276,
+      } as any,
+      countries: "CD", // Limit to Democratic Republic of Congo
+    });
+
+    map.current.addControl(geocoder as any, "top-left");
 
     map.current.on("load", () => {
       setMapLoaded(true);
@@ -152,6 +174,35 @@ export default function MapView({
 
     setUserMarker(marker);
   }, [userLocation, mapLoaded]);
+
+  // Add home location marker
+  useEffect(() => {
+    if (!map.current || !mapLoaded || !homeLocation) return;
+
+    if (homeMarker) {
+      homeMarker.remove();
+    }
+
+    const el = document.createElement("div");
+    el.className = "home-marker";
+    el.style.cssText = `
+      background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="%23f59e0b" stroke="white" stroke-width="1"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>');
+      background-size: contain;
+      width: 28px;
+      height: 28px;
+    `;
+
+    const marker = new mapboxgl.Marker(el)
+      .setLngLat(homeLocation)
+      .setPopup(
+        new mapboxgl.Popup().setHTML(
+          '<div style="padding: 4px; font-size: 12px;">🏠 Home</div>'
+        )
+      )
+      .addTo(map.current);
+
+    setHomeMarker(marker);
+  }, [homeLocation, mapLoaded]);
 
   // Handle directions
   useEffect(() => {

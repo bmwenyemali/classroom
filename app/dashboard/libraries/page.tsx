@@ -38,7 +38,8 @@ export default async function LibrariesPage() {
   return (
     <LibrariesClient
       libraries={librariesWithCounts || []}
-      userLocation={
+      userLocation={null}
+      homeLocation={
         profile?.home_latitude && profile?.home_longitude
           ? [profile.home_longitude, profile.home_latitude]
           : null

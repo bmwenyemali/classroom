@@ -44,7 +44,8 @@ export default async function LibraryDetailPage({ params }: PageProps) {
     <LibraryDetailClient
       library={library}
       books={books || []}
-      userLocation={
+      userLocation={null}
+      homeLocation={
         profile?.home_latitude && profile?.home_longitude
           ? [profile.home_longitude, profile.home_latitude]
           : null

@@ -16,11 +16,13 @@ import Link from "next/link";
 interface LibrariesClientProps {
   libraries: (Library & { bookCount: number })[];
   userLocation: [number, number] | null;
+  homeLocation: [number, number] | null;
 }
 
 export default function LibrariesClient({
   libraries,
   userLocation: initialUserLocation,
+  homeLocation,
 }: LibrariesClientProps) {
   const [selectedLibrary, setSelectedLibrary] = useState<Library | null>(null);
   const [userLocation, setUserLocation] = useState<[number, number] | null>(
@@ -29,6 +31,7 @@ export default function LibrariesClient({
   const [searchQuery, setSearchQuery] = useState("");
   const [showDirections, setShowDirections] = useState(false);
   const [sortBy, setSortBy] = useState<"name" | "distance">("name");
+  const [useHomeForDistance, setUseHomeForDistance] = useState(!!homeLocation);
 
   // Get user's current location
   useEffect(() => {
@@ -68,6 +71,9 @@ export default function LibrariesClient({
   };
 
   // Filter and sort libraries
+  const referenceLocation =
+    useHomeForDistance && homeLocation ? homeLocation : userLocation;
+
   const filteredLibraries = libraries
     .filter(
       (lib) =>
@@ -76,10 +82,10 @@ export default function LibrariesClient({
     )
     .map((lib) => ({
       ...lib,
-      distance: userLocation
+      distance: referenceLocation
         ? calculateDistance(
-            userLocation[1],
-            userLocation[0],
+            referenceLocation[1],
+            referenceLocation[0],
             lib.latitude,
             lib.longitude
           )
@@ -123,11 +129,25 @@ export default function LibrariesClient({
               value={sortBy}
               onChange={(e) => setSortBy(e.target.value as "name" | "distance")}
               className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              disabled={!userLocation}
+              disabled={!referenceLocation}
             >
               <option value="name">Trier par nom</option>
               <option value="distance">Trier par distance</option>
             </select>
+            {homeLocation && (
+              <button
+                onClick={() => setUseHomeForDistance(!useHomeForDistance)}
+                className={`px-4 py-2 rounded-lg transition ${
+                  useHomeForDistance
+                    ? "bg-amber-100 text-amber-700 border border-amber-300"
+                    : "bg-green-100 text-green-700 border border-green-300"
+                }`}
+              >
+                {useHomeForDistance
+                  ? "🏠 Depuis domicile"
+                  : "📍 Position actuelle"}
+              </button>
+            )}
           </div>
         </div>
 
@@ -178,7 +198,11 @@ export default function LibrariesClient({
 
                   {library.distance !== null && (
                     <div className="text-blue-600 font-semibold">
-                      📍 {library.distance.toFixed(1)} km de votre position
+                      {useHomeForDistance && homeLocation ? "🏠" : "📍"}{" "}
+                      {library.distance.toFixed(1)} km{" "}
+                      {useHomeForDistance && homeLocation
+                        ? "de votre domicile"
+                        : "de votre position"}
                     </div>
                   )}
                 </div>
@@ -218,6 +242,7 @@ export default function LibrariesClient({
               libraries={filteredLibraries}
               selectedLibrary={selectedLibrary}
               userLocation={userLocation}
+              homeLocation={homeLocation}
               showDirections={showDirections}
               height="800px"
             />
