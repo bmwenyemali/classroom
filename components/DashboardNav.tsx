@@ -79,6 +79,12 @@ const navigation: NavItem[] = [
     roles: ["teacher"],
   },
   {
+    name: "Student Locations",
+    href: "/dashboard/student-locations",
+    icon: MapPinIcon,
+    roles: ["teacher", "tenured_professor"],
+  },
+  {
     name: "All Classes",
     href: "/dashboard/professor/all-classes",
     icon: BookOpenIcon,

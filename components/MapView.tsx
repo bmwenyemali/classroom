@@ -104,45 +104,116 @@ export default function MapView({
       const el = document.createElement("div");
       el.className = "library-marker";
       el.style.cssText = `
-        background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="%23${
+        position: relative;
+        width: 40px;
+        height: 50px;
+        cursor: pointer;
+      `;
+
+      // Create marker pin
+      const pin = document.createElement("div");
+      pin.style.cssText = `
+        background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="%23${
           selectedLibrary?.id === library.id ? "dc2626" : "2563eb"
-        }" stroke-width="2"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/></svg>');
+        }" stroke="white" stroke-width="1.5"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3" fill="white"/></svg>');
         background-size: contain;
         width: 32px;
         height: 32px;
-        cursor: pointer;
-        transition: transform 0.2s;
+        position: absolute;
+        left: 4px;
+        top: 0;
       `;
+
+      // Create label
+      const label = document.createElement("div");
+      label.textContent = library.name;
+      label.style.cssText = `
+        position: absolute;
+        top: 34px;
+        left: 50%;
+        transform: translateX(-50%);
+        background: rgba(0, 0, 0, 0.8);
+        color: white;
+        padding: 2px 6px;
+        border-radius: 4px;
+        font-size: 10px;
+        white-space: nowrap;
+        opacity: 0;
+        pointer-events: none;
+        transition: opacity 0.2s;
+        z-index: 1;
+      `;
+
+      el.appendChild(pin);
+      el.appendChild(label);
+
       el.addEventListener("mouseenter", () => {
-        el.style.transform = "scale(1.2)";
+        pin.style.filter = "brightness(1.2)";
+        label.style.opacity = "1";
       });
       el.addEventListener("mouseleave", () => {
-        el.style.transform = "scale(1)";
+        pin.style.filter = "brightness(1)";
+        label.style.opacity = "0";
       });
 
-      const popup = new mapboxgl.Popup({ offset: 25 }).setHTML(`
-        <div style="padding: 8px;">
-          <h3 style="font-weight: bold; margin-bottom: 4px; font-size: 14px;">${
-            library.name
-          }</h3>
-          <p style="margin: 4px 0; font-size: 12px;">${library.address}</p>
-          ${
-            library.phone
-              ? `<p style="margin: 4px 0; font-size: 12px;">📞 ${library.phone}</p>`
-              : ""
-          }
-          ${
-            library.opening_hours
-              ? `<p style="margin: 4px 0; font-size: 12px;">🕐 ${library.opening_hours}</p>`
-              : ""
-          }
-        </div>
-      `);
+      const popupContent = document.createElement("div");
+      popupContent.style.cssText = "padding: 8px; min-width: 200px;";
+      popupContent.innerHTML = `
+        <h3 style="font-weight: bold; margin-bottom: 8px; font-size: 14px;">${
+          library.name
+        }</h3>
+        <p style="margin: 4px 0; font-size: 12px;">${library.address}</p>
+        ${
+          library.phone
+            ? `<p style="margin: 4px 0; font-size: 12px;">📞 ${library.phone}</p>`
+            : ""
+        }
+        ${
+          library.opening_hours
+            ? `<p style="margin: 4px 0; font-size: 12px;">🕐 ${library.opening_hours}</p>`
+            : ""
+        }
+        <button 
+          id="directions-${library.id}" 
+          style="
+            width: 100%;
+            margin-top: 8px;
+            padding: 6px;
+            background: #10b981;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 12px;
+          "
+        >
+          📍 Get Directions
+        </button>
+      `;
 
-      new mapboxgl.Marker(el)
+      const popup = new mapboxgl.Popup({ offset: 25 });
+      popup.setDOMContent(popupContent);
+
+      const marker = new mapboxgl.Marker(el)
         .setLngLat([library.longitude, library.latitude])
         .setPopup(popup)
         .addTo(map.current!);
+
+      // Add click handler for directions button after popup opens
+      popup.on("open", () => {
+        const btn = document.getElementById(`directions-${library.id}`);
+        if (btn) {
+          btn.addEventListener("click", () => {
+            if (selectedLibrary?.id !== library.id) {
+              // Trigger direction setup
+              window.dispatchEvent(
+                new CustomEvent("getDirections", { detail: library })
+              );
+            }
+            popup.remove();
+          });
+        }
+      });
     });
   }, [libraries, mapLoaded, selectedLibrary]);
 
