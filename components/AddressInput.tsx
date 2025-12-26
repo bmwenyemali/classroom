@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import MapboxGeocoder from "@mapbox/mapbox-gl-geocoder";
 import "@mapbox/mapbox-gl-geocoder/dist/mapbox-gl-geocoder.css";
 
 interface AddressInputProps {
@@ -18,7 +17,13 @@ export default function AddressInput({
   longitude,
 }: AddressInputProps) {
   const geocoderContainer = useRef<HTMLDivElement>(null);
-  const geocoderRef = useRef<MapboxGeocoder | null>(null);
+  const geocoderRef = useRef<any>(null);
+  const [mounted, setMounted] = useState(false);
+
+  // Only run on client side
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   const formatCoordinate = (coord: number, isLatitude: boolean): string => {
     const absCoord = Math.abs(coord);
@@ -34,50 +39,59 @@ export default function AddressInput({
   };
 
   useEffect(() => {
-    if (!geocoderContainer.current || geocoderRef.current) return;
+    if (!mounted || !geocoderContainer.current || geocoderRef.current) return;
 
-    const mapboxToken =
-      process.env.NEXT_PUBLIC_MAPBOX_TOKEN ||
-      "pk.eyJ1IjoiYmllbnZlbnUxMiIsImEiOiJjbWpuMGlrMjQxYnJ0M2dxMXJ1Mmk4dndlIn0.fhS-CcoTfYUN6i4oIrHYrQ";
+    // Dynamically import Mapbox Geocoder only on client side
+    import("@mapbox/mapbox-gl-geocoder")
+      .then((module) => {
+        const MapboxGeocoder = module.default;
 
-    const geocoder = new MapboxGeocoder({
-      accessToken: mapboxToken,
-      placeholder: "e.g., Avenue Kalembelembe, Kinshasa",
-      proximity: {
-        longitude: 15.3136,
-        latitude: -4.3276,
-      } as any,
-      countries: "CD",
-      bbox: [12.0, -6.0, 31.0, -3.0],
-      marker: false,
-    });
+        const mapboxToken =
+          process.env.NEXT_PUBLIC_MAPBOX_TOKEN ||
+          "pk.eyJ1IjoiYmllbnZlbnUxMiIsImEiOiJjbWpuMGlrMjQxYnJ0M2dxMXJ1Mmk4dndlIn0.fhS-CcoTfYUN6i4oIrHYrQ";
 
-    geocoder.on("result", (e: any) => {
-      const [lng, lat] = e.result.center;
-      onChange(e.result.place_name, lat, lng);
-    });
+        const geocoder = new MapboxGeocoder({
+          accessToken: mapboxToken,
+          placeholder: "e.g., Avenue Kalembelembe, Kinshasa",
+          proximity: {
+            longitude: 15.3136,
+            latitude: -4.3276,
+          } as any,
+          countries: "CD",
+          bbox: [12.0, -6.0, 31.0, -3.0],
+          marker: false,
+        });
 
-    geocoder.on("clear", () => {
-      onChange("", undefined, undefined);
-    });
+        geocoder.on("result", (e: any) => {
+          const [lng, lat] = e.result.center;
+          onChange(e.result.place_name, lat, lng);
+        });
 
-    // Create a minimal map object for the geocoder
-    const dummyMap = {
-      on: () => {},
-      off: () => {},
-      listens: () => false,
-    };
+        geocoder.on("clear", () => {
+          onChange("", undefined, undefined);
+        });
 
-    const mapElement = geocoder.onAdd(dummyMap as any);
-    if (geocoderContainer.current && mapElement) {
-      geocoderContainer.current.appendChild(mapElement);
-    }
-    geocoderRef.current = geocoder;
+        // Create a minimal map object for the geocoder
+        const dummyMap = {
+          on: () => {},
+          off: () => {},
+          listens: () => false,
+        };
 
-    // Set initial value if exists
-    if (value) {
-      geocoder.setInput(value);
-    }
+        const mapElement = geocoder.onAdd(dummyMap as any);
+        if (geocoderContainer.current && mapElement) {
+          geocoderContainer.current.appendChild(mapElement);
+        }
+        geocoderRef.current = geocoder;
+
+        // Set initial value if exists
+        if (value) {
+          geocoder.setInput(value);
+        }
+      })
+      .catch((error) => {
+        console.error("Failed to load Mapbox Geocoder:", error);
+      });
 
     return () => {
       if (geocoderRef.current) {
@@ -85,7 +99,7 @@ export default function AddressInput({
         geocoderRef.current = null;
       }
     };
-  }, []);
+  }, [mounted]);
 
   // Update geocoder input when value changes externally
   useEffect(() => {

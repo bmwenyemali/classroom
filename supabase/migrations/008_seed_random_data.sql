@@ -52,32 +52,30 @@ BEGIN
 END $$;
 
 -- Add sample courses
-INSERT INTO courses (name, code, description, teacher_id, schedule, room, credits)
+INSERT INTO courses (name, code, description, teacher_id, credits)
 SELECT 
   course_name,
   course_code,
   course_desc,
   (SELECT id FROM profiles WHERE role = 'teacher' LIMIT 1 OFFSET (random() * (SELECT COUNT(*)-1 FROM profiles WHERE role = 'teacher'))::int),
-  schedule_text,
-  room_number,
   credits_value
 FROM (VALUES
-  ('Introduction to Computer Science', 'CS101', 'Fundamentals of programming and computer systems', 'Mon/Wed 10:00-11:30', 'Room 201', 3),
-  ('Data Structures and Algorithms', 'CS201', 'Advanced programming concepts and algorithm design', 'Tue/Thu 14:00-15:30', 'Room 202', 4),
-  ('Database Management Systems', 'CS301', 'Relational databases, SQL, and database design', 'Mon/Wed 13:00-14:30', 'Room 203', 3),
-  ('Web Development', 'CS202', 'HTML, CSS, JavaScript, and modern web frameworks', 'Tue/Thu 10:00-11:30', 'Room 204', 3),
-  ('Mobile App Development', 'CS302', 'iOS and Android application development', 'Wed/Fri 10:00-11:30', 'Room 205', 3),
-  ('Mathematics for Computer Science', 'MATH101', 'Discrete mathematics, logic, and set theory', 'Mon/Wed/Fri 9:00-10:00', 'Room 101', 4),
-  ('Linear Algebra', 'MATH201', 'Vectors, matrices, and linear transformations', 'Tue/Thu 9:00-10:30', 'Room 102', 3),
-  ('Calculus I', 'MATH102', 'Limits, derivatives, and applications', 'Mon/Wed/Fri 11:00-12:00', 'Room 103', 4),
-  ('Physics I', 'PHYS101', 'Mechanics, thermodynamics, and waves', 'Tue/Thu 13:00-14:30', 'Room 301', 4),
-  ('Digital Logic Design', 'CS102', 'Boolean algebra, gates, and circuit design', 'Mon/Wed 15:00-16:30', 'Room 206', 3),
-  ('Operating Systems', 'CS303', 'Process management, memory, and file systems', 'Tue/Thu 15:30-17:00', 'Room 207', 4),
-  ('Computer Networks', 'CS304', 'Network protocols, TCP/IP, and internet architecture', 'Wed/Fri 13:00-14:30', 'Room 208', 3),
-  ('Artificial Intelligence', 'CS401', 'Machine learning, neural networks, and AI applications', 'Mon/Wed 16:30-18:00', 'Room 209', 4),
-  ('Software Engineering', 'CS305', 'Software development lifecycle and best practices', 'Tue/Thu 16:00-17:30', 'Room 210', 3),
-  ('Cybersecurity Fundamentals', 'CS306', 'Network security, cryptography, and ethical hacking', 'Wed/Fri 14:30-16:00', 'Room 211', 3)
-) AS courses(course_name, course_code, course_desc, schedule_text, room_number, credits_value)
+  ('Introduction to Computer Science', 'CS101', 'Fundamentals of programming and computer systems', 3),
+  ('Data Structures and Algorithms', 'CS201', 'Advanced programming concepts and algorithm design', 4),
+  ('Database Management Systems', 'CS301', 'Relational databases, SQL, and database design', 3),
+  ('Web Development', 'CS202', 'HTML, CSS, JavaScript, and modern web frameworks', 3),
+  ('Mobile App Development', 'CS302', 'iOS and Android application development', 3),
+  ('Mathematics for Computer Science', 'MATH101', 'Discrete mathematics, logic, and set theory', 4),
+  ('Linear Algebra', 'MATH201', 'Vectors, matrices, and linear transformations', 3),
+  ('Calculus I', 'MATH102', 'Limits, derivatives, and applications', 4),
+  ('Physics I', 'PHYS101', 'Mechanics, thermodynamics, and waves', 4),
+  ('Digital Logic Design', 'CS102', 'Boolean algebra, gates, and circuit design', 3),
+  ('Operating Systems', 'CS303', 'Process management, memory, and file systems', 4),
+  ('Computer Networks', 'CS304', 'Network protocols, TCP/IP, and internet architecture', 3),
+  ('Artificial Intelligence', 'CS401', 'Machine learning, neural networks, and AI applications', 4),
+  ('Software Engineering', 'CS305', 'Software development lifecycle and best practices', 3),
+  ('Cybersecurity Fundamentals', 'CS306', 'Network security, cryptography, and ethical hacking', 3)
+) AS courses(course_name, course_code, course_desc, credits_value)
 ON CONFLICT (code) DO NOTHING;
 
 -- Enroll students in random courses (each student in 4-6 courses)
