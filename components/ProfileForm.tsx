@@ -26,8 +26,15 @@ export default function ProfileForm({ profile }: { profile: any }) {
       const encodedAddress = encodeURIComponent(address);
       const proximity = "15.3136,-4.3276"; // Kinshasa center for better results
 
+      // Bounding box around Kinshasa and greater DRC area
+      // Format: minLon,minLat,maxLon,maxLat
+      const bbox = "12.0,-6.0,31.0,-3.0"; // Covers Kinshasa and surroundings
+
+      // Restrict to Democratic Republic of Congo
+      const country = "cd"; // ISO 3166-1 alpha-2 code for DRC
+
       const response = await fetch(
-        `https://api.mapbox.com/geocoding/v5/mapbox.places/${encodedAddress}.json?proximity=${proximity}&access_token=${mapboxToken}`
+        `https://api.mapbox.com/geocoding/v5/mapbox.places/${encodedAddress}.json?proximity=${proximity}&bbox=${bbox}&country=${country}&access_token=${mapboxToken}`
       );
 
       if (!response.ok) throw new Error("Geocoding failed");
@@ -45,21 +52,92 @@ export default function ProfileForm({ profile }: { profile: any }) {
     }
   };
 
+  const reverseGeocode = async (
+    latitude: number,
+    longitude: number
+  ): Promise<string | null> => {
+    try {
+      const mapboxToken =
+        process.env.NEXT_PUBLIC_MAPBOX_TOKEN ||
+        "pk.eyJ1IjoiYmllbnZlbnUxMiIsImEiOiJjbWpuMGlrMjQxYnJ0M2dxMXJ1Mmk4dndlIn0.fhS-CcoTfYUN6i4oIrHYrQ";
+
+      const response = await fetch(
+        `https://api.mapbox.com/geocoding/v5/mapbox.places/${longitude},${latitude}.json?access_token=${mapboxToken}`
+      );
+
+      if (!response.ok) throw new Error("Reverse geocoding failed");
+
+      const data = await response.json();
+      if (data.features && data.features.length > 0) {
+        return data.features[0].place_name;
+      }
+
+      return null;
+    } catch (error) {
+      console.error("Reverse geocoding error:", error);
+      return null;
+    }
+  };
+
+  const parseCoordinates = (
+    input: string
+  ): { latitude: number; longitude: number } | null => {
+    // Try to match coordinate patterns like:
+    // -4.338442, 15.287446
+    // (-4.338442, 15.287446)
+    // lat: -4.338442, lon: 15.287446
+    const coordPattern = /[(-]?\s*(-?\d+\.?\d*)\s*,\s*(-?\d+\.?\d*)\s*[)]?/;
+    const match = input.match(coordPattern);
+
+    if (match) {
+      const lat = parseFloat(match[1]);
+      const lon = parseFloat(match[2]);
+
+      // Validate coordinates are in reasonable range for DRC
+      if (lat >= -13.5 && lat <= 5.5 && lon >= 12.0 && lon <= 31.5) {
+        return { latitude: lat, longitude: lon };
+      }
+    }
+
+    return null;
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     setMessage("");
 
     let coordinates = null;
+    let finalAddress = homeAddress;
 
-    // Geocode address if it changed
+    // Check if address changed
     if (homeAddress && homeAddress !== profile?.home_address) {
       setGeocoding(true);
-      coordinates = await geocodeAddress(homeAddress);
+
+      // First, check if input is coordinates
+      const parsedCoords = parseCoordinates(homeAddress);
+
+      if (parsedCoords) {
+        // Input is coordinates, do reverse geocoding to get address
+        coordinates = parsedCoords;
+        const addressFromCoords = await reverseGeocode(
+          parsedCoords.latitude,
+          parsedCoords.longitude
+        );
+        if (addressFromCoords) {
+          finalAddress = addressFromCoords;
+        }
+      } else {
+        // Input is address, do forward geocoding to get coordinates
+        coordinates = await geocodeAddress(homeAddress);
+      }
+
       setGeocoding(false);
 
       if (!coordinates) {
-        setMessage("Could not find address. Please check and try again.");
+        setMessage(
+          "Could not find address in Kinshasa/DRC. Please check and try again."
+        );
         setLoading(false);
         return;
       }
@@ -73,7 +151,7 @@ export default function ProfileForm({ profile }: { profile: any }) {
 
     // Add address data if provided
     if (homeAddress) {
-      updateData.home_address = homeAddress;
+      updateData.home_address = finalAddress;
       if (coordinates) {
         updateData.home_latitude = coordinates.latitude;
         updateData.home_longitude = coordinates.longitude;
@@ -175,12 +253,12 @@ export default function ProfileForm({ profile }: { profile: any }) {
           type="text"
           value={homeAddress}
           onChange={(e) => setHomeAddress(e.target.value)}
-          placeholder="e.g., Avenue Kalembelembe, Kinshasa"
+          placeholder="e.g., Avenue Kalembelembe, Kinshasa or -4.338442, 15.287446"
           className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
         />
         <p className="text-xs text-gray-500 mt-1">
-          Enter your home address to see libraries near you. We'll automatically
-          find the location.
+          Enter your home address or paste coordinates from Google Maps. We'll
+          find the location in Kinshasa/DRC.
         </p>
       </div>
 
