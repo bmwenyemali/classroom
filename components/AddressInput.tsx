@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import "@mapbox/mapbox-gl-geocoder/dist/mapbox-gl-geocoder.css";
 
 interface AddressInputProps {
   value: string;
@@ -10,115 +9,147 @@ interface AddressInputProps {
   longitude?: number | null;
 }
 
+interface Suggestion {
+  place_name: string;
+  center: [number, number];
+}
+
 export default function AddressInput({
   value,
   onChange,
   latitude,
   longitude,
 }: AddressInputProps) {
-  const geocoderContainer = useRef<HTMLDivElement>(null);
-  const geocoderRef = useRef<any>(null);
-  const [mounted, setMounted] = useState(false);
-
-  // Only run on client side
-  useEffect(() => {
-    setMounted(true);
-  }, []);
+  const [suggestions, setSuggestions] = useState<Suggestion[]>([]);
+  const [showSuggestions, setShowSuggestions] = useState(false);
+  const [isSearching, setIsSearching] = useState(false);
+  const inputRef = useRef<HTMLInputElement>(null);
+  const suggestionsRef = useRef<HTMLDivElement>(null);
 
   const formatCoordinate = (coord: number, isLatitude: boolean): string => {
     const absCoord = Math.abs(coord);
-    let direction: string;
-
-    if (isLatitude) {
-      direction = coord >= 0 ? "N" : "S";
-    } else {
-      direction = coord >= 0 ? "E" : "W";
-    }
-
+    const direction = isLatitude
+      ? coord >= 0
+        ? "N"
+        : "S"
+      : coord >= 0
+      ? "E"
+      : "W";
     return `${absCoord.toFixed(6)} ${direction}`;
   };
 
+  // Search for address suggestions
+  const searchAddress = async (query: string) => {
+    if (!query || query.length < 3) {
+      setSuggestions([]);
+      setShowSuggestions(false);
+      return;
+    }
+
+    setIsSearching(true);
+    try {
+      const mapboxToken =
+        process.env.NEXT_PUBLIC_MAPBOX_TOKEN ||
+        "pk.eyJ1IjoiYmllbnZlbnUxMiIsImEiOiJjbWpuMGlrMjQxYnJ0M2dxMXJ1Mmk4dndlIn0.fhS-CcoTfYUN6i4oIrHYrQ";
+
+      const response = await fetch(
+        `https://api.mapbox.com/geocoding/v5/mapbox.places/${encodeURIComponent(
+          query
+        )}.json?proximity=15.3136,-4.3276&bbox=12.0,-6.0,31.0,-3.0&country=cd&access_token=${mapboxToken}`
+      );
+
+      if (response.ok) {
+        const data = await response.json();
+        setSuggestions(data.features || []);
+        setShowSuggestions(true);
+      }
+    } catch (error) {
+      console.error("Address search error:", error);
+    } finally {
+      setIsSearching(false);
+    }
+  };
+
+  // Handle input change
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const newValue = e.target.value;
+    onChange(newValue, undefined, undefined);
+    searchAddress(newValue);
+  };
+
+  // Handle suggestion selection
+  const handleSelectSuggestion = (suggestion: Suggestion) => {
+    const [lng, lat] = suggestion.center;
+    onChange(suggestion.place_name, lat, lng);
+    setSuggestions([]);
+    setShowSuggestions(false);
+  };
+
+  // Close suggestions when clicking outside
   useEffect(() => {
-    if (!mounted || !geocoderContainer.current || geocoderRef.current) return;
-
-    // Dynamically import Mapbox Geocoder only on client side
-    import("@mapbox/mapbox-gl-geocoder")
-      .then((module) => {
-        const MapboxGeocoder = module.default;
-
-        const mapboxToken =
-          process.env.NEXT_PUBLIC_MAPBOX_TOKEN ||
-          "pk.eyJ1IjoiYmllbnZlbnUxMiIsImEiOiJjbWpuMGlrMjQxYnJ0M2dxMXJ1Mmk4dndlIn0.fhS-CcoTfYUN6i4oIrHYrQ";
-
-        const geocoder = new MapboxGeocoder({
-          accessToken: mapboxToken,
-          placeholder: "e.g., Avenue Kalembelembe, Kinshasa",
-          proximity: {
-            longitude: 15.3136,
-            latitude: -4.3276,
-          } as any,
-          countries: "CD",
-          bbox: [12.0, -6.0, 31.0, -3.0],
-          marker: false,
-        });
-
-        geocoder.on("result", (e: any) => {
-          const [lng, lat] = e.result.center;
-          onChange(e.result.place_name, lat, lng);
-        });
-
-        geocoder.on("clear", () => {
-          onChange("", undefined, undefined);
-        });
-
-        // Create a minimal map object for the geocoder
-        const dummyMap = {
-          on: () => {},
-          off: () => {},
-          listens: () => false,
-        };
-
-        const mapElement = geocoder.onAdd(dummyMap as any);
-        if (geocoderContainer.current && mapElement) {
-          geocoderContainer.current.appendChild(mapElement);
-        }
-        geocoderRef.current = geocoder;
-
-        // Set initial value if exists
-        if (value) {
-          geocoder.setInput(value);
-        }
-      })
-      .catch((error) => {
-        console.error("Failed to load Mapbox Geocoder:", error);
-      });
-
-    return () => {
-      if (geocoderRef.current) {
-        geocoderRef.current.onRemove();
-        geocoderRef.current = null;
+    const handleClickOutside = (event: MouseEvent) => {
+      if (
+        suggestionsRef.current &&
+        !suggestionsRef.current.contains(event.target as Node) &&
+        !inputRef.current?.contains(event.target as Node)
+      ) {
+        setShowSuggestions(false);
       }
     };
-  }, [mounted]);
 
-  // Update geocoder input when value changes externally
-  useEffect(() => {
-    if (geocoderRef.current) {
-      geocoderRef.current.setInput(value);
-    }
-  }, [value]);
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
 
   return (
-    <div>
-      <div ref={geocoderContainer} className="mb-2" />
+    <div className="relative">
+      <input
+        ref={inputRef}
+        type="text"
+        value={value}
+        onChange={handleInputChange}
+        onFocus={() => {
+          if (suggestions.length > 0) setShowSuggestions(true);
+        }}
+        placeholder="e.g., 35 Avenue Kalembelembe, Kinshasa"
+        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+      />
+
+      {/* Suggestions Dropdown */}
+      {showSuggestions && suggestions.length > 0 && (
+        <div
+          ref={suggestionsRef}
+          className="absolute z-50 w-full mt-1 bg-white border border-gray-300 rounded-lg shadow-lg max-h-60 overflow-y-auto"
+        >
+          {suggestions.map((suggestion, index) => (
+            <div
+              key={index}
+              onClick={() => handleSelectSuggestion(suggestion)}
+              className="px-4 py-2 hover:bg-blue-50 cursor-pointer transition-colors border-b border-gray-100 last:border-b-0"
+            >
+              <div className="text-sm text-gray-900">
+                {suggestion.place_name}
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* Loading indicator */}
+      {isSearching && (
+        <div className="text-xs text-gray-500 mt-1">Searching...</div>
+      )}
+
+      {/* Coordinates display */}
       {latitude != null && longitude != null && (
-        <div className="text-xs text-gray-600 bg-blue-50 border border-blue-200 rounded px-2 py-1 mt-1">
+        <div className="text-xs text-gray-600 bg-blue-50 border border-blue-200 rounded px-2 py-1 mt-2">
           📍 Coordinates: {formatCoordinate(latitude, true)},{" "}
           {formatCoordinate(longitude, false)}
         </div>
       )}
+
       <p className="text-xs text-gray-500 mt-1">
-        Search for an address or paste coordinates (e.g., -4.338442, 15.287446)
+        Start typing your address to see suggestions from Kinshasa, DRC
       </p>
     </div>
   );

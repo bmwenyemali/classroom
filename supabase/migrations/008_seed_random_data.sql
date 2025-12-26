@@ -93,8 +93,8 @@ BEGIN
     FOR course_rec IN 
       SELECT id FROM courses ORDER BY random() LIMIT num_courses
     LOOP
-      INSERT INTO enrollments (student_id, course_id, enrolled_at)
-      VALUES (student_rec.id, course_rec.id, NOW() - (random() * interval '60 days'))
+      INSERT INTO enrollments (student_id, course_id)
+      VALUES (student_rec.id, course_rec.id)
       ON CONFLICT (student_id, course_id) DO NOTHING;
       
       enrolled_count := enrolled_count + 1;
