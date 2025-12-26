@@ -12,6 +12,7 @@ import {
   CalendarIcon,
   UserCircleIcon,
   ArrowRightOnRectangleIcon,
+  MapPinIcon,
 } from "@heroicons/react/24/outline";
 import type { UserRole } from "@/lib/types";
 
@@ -46,6 +47,18 @@ const navigation: NavItem[] = [
     href: "/dashboard/student/teachers",
     icon: UserGroupIcon,
     roles: ["student"],
+  },
+  {
+    name: "Libraries",
+    href: "/dashboard/libraries",
+    icon: MapPinIcon,
+    roles: ["student", "teacher", "tenured_professor"],
+  },
+  {
+    name: "Books",
+    href: "/dashboard/books",
+    icon: BookOpenIcon,
+    roles: ["student", "teacher", "tenured_professor"],
   },
   {
     name: "My Courses",

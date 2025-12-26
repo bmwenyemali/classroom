@@ -1,0 +1,231 @@
+"use client";
+
+import { useEffect, useRef, useState } from "react";
+import mapboxgl from "mapbox-gl";
+import MapboxDirections from "@mapbox/mapbox-gl-directions/dist/mapbox-gl-directions";
+import "@mapbox/mapbox-gl-directions/dist/mapbox-gl-directions.css";
+import "mapbox-gl/dist/mapbox-gl.css";
+import { Library } from "@/lib/types/library";
+
+mapboxgl.accessToken =
+  process.env.NEXT_PUBLIC_MAPBOX_TOKEN ||
+  "pk.eyJ1IjoiYmllbnZlbnUxMiIsImEiOiJjbWpuMGlrMjQxYnJ0M2dxMXJ1Mmk4dndlIn0.fhS-CcoTfYUN6i4oIrHYrQ";
+
+interface MapViewProps {
+  libraries: Library[];
+  selectedLibrary?: Library | null;
+  userLocation?: [number, number] | null;
+  showDirections?: boolean;
+  height?: string;
+}
+
+export default function MapView({
+  libraries,
+  selectedLibrary,
+  userLocation,
+  showDirections = false,
+  height = "600px",
+}: MapViewProps) {
+  const mapContainer = useRef<HTMLDivElement>(null);
+  const map = useRef<mapboxgl.Map | null>(null);
+  const [mapLoaded, setMapLoaded] = useState(false);
+  const [userMarker, setUserMarker] = useState<mapboxgl.Marker | null>(null);
+  const directionsRef = useRef<MapboxDirections | null>(null);
+
+  // Initialize map
+  useEffect(() => {
+    if (!mapContainer.current || map.current) return;
+
+    // Center on Kinshasa by default
+    const defaultCenter: [number, number] = [15.3136, -4.3276];
+
+    map.current = new mapboxgl.Map({
+      container: mapContainer.current,
+      style: "mapbox://styles/mapbox/streets-v12",
+      center: userLocation || defaultCenter,
+      zoom: userLocation ? 13 : 11,
+    });
+
+    map.current.addControl(new mapboxgl.NavigationControl(), "top-right");
+    map.current.addControl(new mapboxgl.FullscreenControl(), "top-right");
+    map.current.addControl(
+      new mapboxgl.GeolocateControl({
+        positionOptions: {
+          enableHighAccuracy: true,
+        },
+        trackUserLocation: true,
+        showUserHeading: true,
+      }),
+      "top-right"
+    );
+
+    map.current.on("load", () => {
+      setMapLoaded(true);
+    });
+
+    return () => {
+      map.current?.remove();
+      map.current = null;
+    };
+  }, []);
+
+  // Add library markers
+  useEffect(() => {
+    if (!map.current || !mapLoaded) return;
+
+    // Clear existing library markers
+    const existingMarkers = document.querySelectorAll(".library-marker");
+    existingMarkers.forEach((marker) => marker.remove());
+
+    // Add markers for all libraries
+    libraries.forEach((library) => {
+      const el = document.createElement("div");
+      el.className = "library-marker";
+      el.style.cssText = `
+        background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="%23${
+          selectedLibrary?.id === library.id ? "dc2626" : "2563eb"
+        }" stroke-width="2"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/></svg>');
+        background-size: contain;
+        width: 32px;
+        height: 32px;
+        cursor: pointer;
+        transition: transform 0.2s;
+      `;
+      el.addEventListener("mouseenter", () => {
+        el.style.transform = "scale(1.2)";
+      });
+      el.addEventListener("mouseleave", () => {
+        el.style.transform = "scale(1)";
+      });
+
+      const popup = new mapboxgl.Popup({ offset: 25 }).setHTML(`
+        <div style="padding: 8px;">
+          <h3 style="font-weight: bold; margin-bottom: 4px; font-size: 14px;">${
+            library.name
+          }</h3>
+          <p style="margin: 4px 0; font-size: 12px;">${library.address}</p>
+          ${
+            library.phone
+              ? `<p style="margin: 4px 0; font-size: 12px;">📞 ${library.phone}</p>`
+              : ""
+          }
+          ${
+            library.opening_hours
+              ? `<p style="margin: 4px 0; font-size: 12px;">🕐 ${library.opening_hours}</p>`
+              : ""
+          }
+        </div>
+      `);
+
+      new mapboxgl.Marker(el)
+        .setLngLat([library.longitude, library.latitude])
+        .setPopup(popup)
+        .addTo(map.current!);
+    });
+  }, [libraries, mapLoaded, selectedLibrary]);
+
+  // Add user location marker
+  useEffect(() => {
+    if (!map.current || !mapLoaded || !userLocation) return;
+
+    if (userMarker) {
+      userMarker.remove();
+    }
+
+    const el = document.createElement("div");
+    el.className = "user-marker";
+    el.style.cssText = `
+      background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="%2310b981"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6" fill="white"/></svg>');
+      background-size: contain;
+      width: 24px;
+      height: 24px;
+    `;
+
+    const marker = new mapboxgl.Marker(el)
+      .setLngLat(userLocation)
+      .setPopup(
+        new mapboxgl.Popup().setHTML(
+          '<div style="padding: 4px; font-size: 12px;">📍 Your Location</div>'
+        )
+      )
+      .addTo(map.current);
+
+    setUserMarker(marker);
+  }, [userLocation, mapLoaded]);
+
+  // Handle directions
+  useEffect(() => {
+    if (
+      !map.current ||
+      !mapLoaded ||
+      !showDirections ||
+      !selectedLibrary ||
+      !userLocation
+    ) {
+      // Remove directions if conditions not met
+      if (directionsRef.current && map.current) {
+        map.current.removeControl(directionsRef.current);
+        directionsRef.current = null;
+      }
+      return;
+    }
+
+    // Initialize directions
+    if (!directionsRef.current) {
+      directionsRef.current = new MapboxDirections({
+        accessToken: mapboxgl.accessToken!,
+        unit: "metric",
+        profile: "mapbox/driving-traffic", // Shows traffic
+        alternatives: true,
+        congestion: true,
+        interactive: false,
+      });
+
+      map.current.addControl(directionsRef.current, "top-left");
+    }
+
+    // Set origin and destination
+    directionsRef.current.setOrigin(userLocation);
+    directionsRef.current.setDestination([
+      selectedLibrary.longitude,
+      selectedLibrary.latitude,
+    ]);
+
+    // Fit bounds to show both points
+    const bounds = new mapboxgl.LngLatBounds();
+    bounds.extend(userLocation);
+    bounds.extend([selectedLibrary.longitude, selectedLibrary.latitude]);
+    map.current.fitBounds(bounds, { padding: 100 });
+  }, [showDirections, selectedLibrary, userLocation, mapLoaded]);
+
+  // Center on selected library
+  useEffect(() => {
+    if (!map.current || !selectedLibrary) return;
+
+    map.current.flyTo({
+      center: [selectedLibrary.longitude, selectedLibrary.latitude],
+      zoom: 15,
+      duration: 2000,
+    });
+  }, [selectedLibrary]);
+
+  return (
+    <div className="relative">
+      <div
+        ref={mapContainer}
+        style={{ width: "100%", height }}
+        className="rounded-lg shadow-lg"
+      />
+      {showDirections && (!userLocation || !selectedLibrary) && (
+        <div className="absolute top-4 left-4 bg-yellow-50 border border-yellow-200 rounded-lg p-3 shadow-lg max-w-xs">
+          <p className="text-sm text-yellow-800">
+            {!userLocation && "📍 Enable location to get directions"}
+            {!selectedLibrary &&
+              userLocation &&
+              "📚 Select a library to get directions"}
+          </p>
+        </div>
+      )}
+    </div>
+  );
+}
