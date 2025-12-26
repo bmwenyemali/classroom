@@ -149,33 +149,29 @@ DECLARE
     'Exam Review', 'Lab Work', 'Assignment Due',
     'Presentation', 'Workshop', 'Seminar', 'Conference'
   ];
-  event_types TEXT[] := ARRAY['class', 'assignment', 'exam', 'event'];
   event_title TEXT;
-  event_type TEXT;
   num_events INTEGER;
   i INTEGER;
-  start_time TIMESTAMP;
-  end_time TIMESTAMP;
+  event_date DATE;
+  event_time TIME;
 BEGIN
   FOR user_rec IN SELECT id FROM profiles LIMIT 50 LOOP
     num_events := 2 + floor(random() * 5)::int; -- 2 to 6 events per user
     
     FOR i IN 1..num_events LOOP
       event_title := event_titles[1 + floor(random() * array_length(event_titles, 1))::int];
-      event_type := event_types[1 + floor(random() * array_length(event_types, 1))::int];
       
       -- Random future date within next 30 days
-      start_time := NOW() + (random() * interval '30 days');
-      end_time := start_time + (interval '1 hour') + (random() * interval '2 hours');
+      event_date := CURRENT_DATE + (random() * 30)::int;
+      event_time := (TIME '08:00:00' + (random() * interval '10 hours'))::TIME;
       
-      INSERT INTO events (user_id, title, description, start_time, end_time, event_type)
+      INSERT INTO events (user_id, title, description, date, time)
       VALUES (
         user_rec.id,
         event_title,
-        'Scheduled ' || event_type || ' for ' || to_char(start_time, 'Month DD'),
-        start_time,
-        end_time,
-        event_type
+        'Scheduled event for ' || to_char(event_date, 'Month DD'),
+        event_date,
+        event_time
       );
     END LOOP;
   END LOOP;
@@ -185,23 +181,23 @@ END $$;
 DO $$
 DECLARE
   user_rec RECORD;
-  start_time TIMESTAMP;
-  end_time TIMESTAMP;
+  event_date DATE;
+  event_time TIME;
+  i INTEGER;
 BEGIN
   FOR user_rec IN SELECT id FROM profiles LIMIT 30 LOOP
     -- Add 2-3 past events
     FOR i IN 1..2 LOOP
-      start_time := NOW() - (random() * interval '30 days');
-      end_time := start_time + interval '2 hours';
+      event_date := CURRENT_DATE - (random() * 30)::int;
+      event_time := (TIME '08:00:00' + (random() * interval '10 hours'))::TIME;
       
-      INSERT INTO events (user_id, title, description, start_time, end_time, event_type)
+      INSERT INTO events (user_id, title, description, date, time)
       VALUES (
         user_rec.id,
         'Completed Activity',
-        'Past event from ' || to_char(start_time, 'Month DD'),
-        start_time,
-        end_time,
-        'class'
+        'Past event from ' || to_char(event_date, 'Month DD'),
+        event_date,
+        event_time
       );
     END LOOP;
   END LOOP;
